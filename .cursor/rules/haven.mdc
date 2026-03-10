@@ -1,0 +1,256 @@
+---
+description: Haven project conventions -- architecture, code style, naming, and engineering standards
+globs:
+alwaysApply: true
+---
+
+# Haven -- Project Conventions
+
+## Project Overview
+
+Haven is a privacy-first, ad-free social platform built with Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS v4, and Neon PostgreSQL via Drizzle ORM. The codebase follows strict separation of concerns: components are dumb and presentational, business logic lives in `lib/`, `hooks/`, `stores/`, and `providers/`.
+
+## Architecture
+
+### Directory Roles
+
+- `app/` -- Routes, pages, layouts, API routes, and server-side data fetching only. No business logic.
+- `components/ui/` -- shadcn/ui atomic primitives. Never contain business logic.
+- `components/{domain}/` -- Presentational components grouped by feature domain (feed, chat, profile, stories, comments, etc.). Accept props, render UI, dispatch callbacks. No direct API calls.
+- `components/providers/` -- React context providers (Clerk, Theme, TanStack Query, Toast, etc.).
+- `components/shared/` -- Cross-cutting UI (Sidebar, Navbar, CommandPalette, ReactionPicker, etc.).
+- `lib/db/schema/` -- Drizzle ORM table definitions. One file per domain.
+- `lib/db/queries/` -- Reusable query functions. Never import these in components directly.
+- `lib/actions/` -- Next.js server actions. All mutations go through here. Named `{domain}.actions.ts`.
+- `lib/validators/` -- Zod schemas for input validation. Shared between client forms and server actions.
+- `lib/` (root files) -- Service clients (pusher, redis, resend, uploadthing, crypto, og-scraper), utilities, constants, env config.
+- `hooks/` -- Custom React hooks. Encapsulate side effects, subscriptions, and browser APIs.
+- `stores/` -- Zustand stores. Small, atomic, single-responsibility. Named `{concern}.store.ts`.
+- `types/` -- Shared TypeScript types and interfaces.
+
+### Data Flow
+
+```
+User Interaction → Component (callback) → Server Action (lib/actions/) → DB Query (lib/db/queries/) → Drizzle → Neon PostgreSQL
+                                        → Pusher (real-time events)
+                                        → Upstash Redis (cache/presence)
+```
+
+Client state: Zustand stores (persisted where needed).
+Server state: TanStack Query (cache, revalidation, optimistic updates).
+
+### Rules
+
+- Components NEVER call `db` directly. Always go through server actions or TanStack Query hooks that call server actions.
+- Server actions ALWAYS validate input with Zod schemas from `lib/validators/`.
+- Server actions ALWAYS check authentication via `auth()` from Clerk.
+- Avoid prop drilling. Use Zustand stores or React context for shared state.
+- Use `"use client"` only when the component genuinely needs client interactivity. Default to server components.
+- Colocate loading.tsx, error.tsx, and not-found.tsx with route segments.
+
+## TypeScript
+
+- **Strict mode**: `strict: true` in tsconfig. Zero tolerance for `any`.
+- **Interfaces** for object shapes (props, DB row types, API responses).
+- **Types** for unions, intersections, and computed types.
+- **`as const`** for configuration objects and literal tuples.
+- **Enums**: Prefer `as const` objects over TypeScript enums.
+- **Generics**: Use meaningful names (`TPost`, `TUser`), not single letters unless trivially obvious (`T` in utilities).
+- **Return types**: Explicit on exported functions and server actions. Inferred on internal helpers.
+- **Non-null assertions**: Forbidden. Use proper narrowing or optional chaining.
+- **Type assertions** (`as`): Avoid. If unavoidable, add a comment explaining why.
+
+```typescript
+// Prefer
+interface PostCardProps {
+  post: Post;
+  onReact: (reactionType: ReactionType) => void;
+}
+
+// Configuration literals
+const REACTION_TYPES = ['insightful', 'creative', 'supportive', 'funny', 'heartwarming', 'fire'] as const;
+type ReactionType = (typeof REACTION_TYPES)[number];
+```
+
+## Styling (Tailwind CSS v4)
+
+### Class Order
+
+Always order Tailwind classes logically:
+
+1. **Layout** -- display, position, overflow, z-index (`flex`, `grid`, `relative`, `absolute`, `overflow-hidden`, `z-10`)
+2. **Box Model** -- width, height, margin, padding, gap (`w-full`, `h-12`, `mx-auto`, `p-4`, `gap-3`)
+3. **Visual** -- background, border, rounded, shadow, opacity (`bg-background`, `border`, `rounded-lg`, `shadow-md`)
+4. **Typography** -- font, text, color, alignment (`text-sm`, `font-medium`, `text-foreground`, `text-center`)
+5. **Interactivity** -- cursor, transition, animation, hover/focus states (`cursor-pointer`, `transition-colors`, `hover:bg-accent`)
+
+```tsx
+<div className="flex items-center gap-3 w-full px-4 py-2 bg-card border rounded-lg text-sm font-medium text-foreground transition-colors hover:bg-accent">
+```
+
+### Utility Setup
+
+Use `cn()` helper combining clsx + tw-merge:
+
+```typescript
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+Use CVA for component variants:
+
+```typescript
+import { cva, type VariantProps } from 'class-variance-authority';
+
+const buttonVariants = cva('inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors', {
+  variants: {
+    variant: {
+      default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      outline: 'border border-input bg-background hover:bg-accent',
+    },
+    size: {
+      sm: 'h-8 px-3',
+      md: 'h-10 px-4',
+      lg: 'h-12 px-6',
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+    size: 'md',
+  },
+});
+```
+
+## Zustand Stores
+
+- **Atomic**: One store per concern. Never a monolithic global store.
+- **Persisted**: Use `persist` middleware only for user preferences (zen mode, incognito, theme).
+- **Naming**: `use{Concern}Store` exported from `stores/{concern}.store.ts`.
+- **No derived state inside stores**: Compute in selectors or hooks.
+
+```typescript
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+interface ZenModeState {
+  enabled: boolean;
+  toggle: () => void;
+}
+
+export const useZenModeStore = create<ZenModeState>()(
+  persist(
+    (set) => ({
+      enabled: false,
+      toggle: () => set((state) => ({ enabled: !state.enabled })),
+    }),
+    { name: 'haven-zen-mode' },
+  ),
+);
+```
+
+## ESLint Rules
+
+- **No `console.log`**: Only `console.warn` and `console.error` allowed. Use the `no-console` rule with `allow: ["warn", "error"]`.
+- **Import sorting**: Use `eslint-plugin-import` with groups: builtin → external → internal → parent → sibling → index. Blank line between groups.
+- **Unused variables**: Error, not warning. Prefix intentionally unused with `_`.
+- **No default exports**: Prefer named exports except for Next.js pages/layouts/routes (which require default exports).
+
+## Naming Conventions
+
+- **Files**: kebab-case (`post-card.tsx`, `zen-mode.store.ts`, `post.actions.ts`).
+- **Components**: PascalCase (`PostCard`, `MessageBubble`).
+- **Hooks**: camelCase with `use` prefix (`useDebounce`, `usePusher`).
+- **Stores**: camelCase with `use` prefix and `Store` suffix (`useZenModeStore`).
+- **Server actions**: camelCase verbs (`createPost`, `editMessage`, `toggleFollow`).
+- **Validators**: camelCase with `Schema` suffix (`createPostSchema`, `editProfileSchema`).
+- **Types/Interfaces**: PascalCase (`Post`, `UserProfile`, `ReactionType`).
+- **Constants**: SCREAMING_SNAKE_CASE (`MAX_PINNED_POSTS`, `REACTION_TYPES`).
+- **DB schemas**: snake_case table names, camelCase column names in Drizzle.
+
+## Comments
+
+- Comments explain **why**, never **what**.
+- No commented-out code. Delete it; git has history.
+- No TODO comments in committed code. Use the issue tracker.
+- JSDoc only on exported public APIs and complex utility functions.
+
+## Code Quality
+
+### SOLID Principles
+- **S**: Each file/function has one reason to change.
+- **O**: Extend via composition (variants, slots, render props), not modification.
+- **L**: Component interfaces must be substitutable (consistent prop shapes).
+- **I**: Small, focused interfaces. No god-props.
+- **D**: Components depend on abstractions (hooks, stores), not concrete implementations.
+
+### KISS
+- Prefer simple, obvious solutions over clever ones.
+- Flatten deeply nested logic with early returns and guard clauses.
+- Avoid premature abstraction. Duplicate twice before extracting.
+
+### DRY
+- Extract only when duplication is proven (3+ occurrences).
+- Share logic via hooks and utility functions, not inheritance.
+- Shared validators in `lib/validators/` used by both client and server.
+
+### Zero Tolerance
+- **Dead code**: Delete unused imports, functions, components, and variables immediately.
+- **Duplicate code**: Extract to shared utilities, hooks, or components on third occurrence.
+- **Magic numbers/strings**: Extract to constants.
+
+## Server Actions Pattern
+
+```typescript
+'use server';
+
+import { auth } from '@clerk/nextjs/server';
+import { revalidatePath } from 'next/cache';
+
+import { db } from '@/lib/db';
+import { posts } from '@/lib/db/schema';
+import { createPostSchema } from '@/lib/validators/post';
+
+export async function createPost(input: unknown) {
+  const { userId } = await auth();
+  if (!userId) throw new Error('Unauthorized');
+
+  const validated = createPostSchema.parse(input);
+
+  const [post] = await db.insert(posts).values({
+    authorId: userId,
+    content: validated.content,
+    visibility: validated.visibility,
+  }).returning();
+
+  revalidatePath('/');
+  return post;
+}
+```
+
+## File Size Limits
+
+- Components: < 150 lines. Split into sub-components if larger.
+- Server actions: < 80 lines per function. Extract query logic to `lib/db/queries/`.
+- Hooks: < 100 lines. Compose from smaller hooks if larger.
+- Store files: < 60 lines. Keep stores atomic.
+
+## Performance Patterns
+
+- Use `React.memo` only when profiling proves a re-render bottleneck.
+- Use `useCallback`/`useMemo` only when passing to memoized children or expensive computations.
+- Prefer server components for data fetching. Client components only for interactivity.
+- Use TanStack Query `initialData` pattern: fetch on server, hydrate on client.
+- Virtualize long lists (feed, messages) with `@tanstack/react-virtual`.
+- Use Next.js `<Image>` for all images. Always provide width/height or fill.
+- Cursor-based pagination for all feeds. Never offset-based.
+
+## Git Commit Messages
+
+- Format: `type(scope): description`
+- Types: `feat`, `fix`, `refactor`, `style`, `docs`, `chore`, `perf`, `test`
+- Scope: domain name (`feed`, `chat`, `auth`, `profile`, `stories`, `db`, `config`)
+- Examples: `feat(feed): add rich reaction picker`, `fix(chat): prevent duplicate message delivery`
