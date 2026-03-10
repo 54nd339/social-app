@@ -13,7 +13,6 @@ interface PollOption {
 }
 
 interface PollCardProps {
-  pollId: string;
   question: string;
   options: PollOption[];
   expiresAt: Date | null;

@@ -71,7 +71,7 @@ export function PostCard({ post }: PostCardProps) {
     <article className="bg-card hover:bg-card/80 border-b transition-colors">
       <div className="p-4">
         <div className="flex items-start gap-3">
-          <Link href={`/@${post.author.username}`}>
+          <Link href={`/${post.author.username}`}>
             <Avatar className="size-10">
               <AvatarImage src={post.author.avatarUrl ?? undefined} alt={post.author.username} />
               <AvatarFallback>{post.author.username.charAt(0).toUpperCase()}</AvatarFallback>
@@ -82,13 +82,13 @@ export function PostCard({ post }: PostCardProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Link
-                  href={`/@${post.author.username}`}
+                  href={`/${post.author.username}`}
                   className="truncate text-sm font-semibold hover:underline"
                 >
                   {post.author.displayName ?? post.author.username}
                 </Link>
                 <Link
-                  href={`/@${post.author.username}`}
+                  href={`/${post.author.username}`}
                   className="text-muted-foreground truncate text-sm"
                 >
                   @{post.author.username}
@@ -145,10 +145,7 @@ export function PostCard({ post }: PostCardProps) {
             {post.collabUser && (
               <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
                 <span>with</span>
-                <Link
-                  href={`/@${post.collabUser.username}`}
-                  className="font-medium hover:underline"
-                >
+                <Link href={`/${post.collabUser.username}`} className="font-medium hover:underline">
                   @{post.collabUser.username}
                 </Link>
               </div>
@@ -201,7 +198,6 @@ export function PostCard({ post }: PostCardProps) {
 
                   {post.poll && (
                     <PollCard
-                      pollId={post.poll.id}
                       question={post.poll.question}
                       options={post.poll.options}
                       expiresAt={post.poll.expiresAt}
@@ -220,9 +216,18 @@ export function PostCard({ post }: PostCardProps) {
                 userReaction={post.userReaction}
               />
 
-              <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 text-xs">
-                <MessageCircle className="size-4" />
-                {post.commentCount > 0 && <span className="tabular-nums">{post.commentCount}</span>}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground gap-1.5 text-xs"
+                asChild
+              >
+                <Link href={`/post/${post.id}`}>
+                  <MessageCircle className="size-4" />
+                  {post.commentCount > 0 && (
+                    <span className="tabular-nums">{post.commentCount}</span>
+                  )}
+                </Link>
               </Button>
 
               <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 text-xs">
