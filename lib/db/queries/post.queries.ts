@@ -1,18 +1,18 @@
-import { and, desc, eq, lt, sql, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm';
 
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { db } from '@/lib/db';
 import {
-  postMedia,
-  postLinkPreviews,
-  posts,
-  polls,
-  pollOptions,
-  pollVotes,
-  users,
-  reactions,
   comments,
+  pollOptions,
+  polls,
+  pollVotes,
+  postLinkPreviews,
+  postMedia,
+  posts,
+  reactions,
   shares,
+  users,
 } from '@/lib/db/schema';
 
 export interface FeedPost {

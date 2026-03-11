@@ -1,17 +1,17 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
 
 import { db } from '@/lib/db';
 import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 import { comments } from '@/lib/db/schema';
 import {
-  createCommentSchema,
-  editCommentSchema,
   type CreateCommentInput,
+  createCommentSchema,
   type EditCommentInput,
+  editCommentSchema,
 } from '@/lib/validators/comment';
 
 async function getAuthenticatedUser() {

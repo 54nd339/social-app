@@ -1,9 +1,9 @@
 'use client';
 
+import { useRef, useState } from 'react';
+import { Loader2, Send } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Send } from 'lucide-react';
-import { useRef, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

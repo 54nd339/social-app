@@ -1,21 +1,21 @@
 'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, Flame, Loader2, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useCallback, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
+import { Check, Flame, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
 import { checkUsernameAvailability, completeOnboarding } from '@/lib/actions/user.actions';
 import { cn } from '@/lib/utils';
-import { onboardingSchema, type OnboardingInput } from '@/lib/validators/user';
+import { type OnboardingInput, onboardingSchema } from '@/lib/validators/user';
+import { useDebouncedCallback } from '@/hooks/use-debounced-callback';
 
 const INTEREST_SUGGESTIONS = [
   'Technology',

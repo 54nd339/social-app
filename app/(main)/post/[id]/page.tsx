@@ -1,7 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
-import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
+import { auth } from '@clerk/nextjs/server';
 
 import { CommentThread } from '@/components/comments';
 import { Button } from '@/components/ui/button';

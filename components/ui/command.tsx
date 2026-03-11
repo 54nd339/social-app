@@ -1,8 +1,8 @@
 'use client';
 
+import * as React from 'react';
 import { Command as CommandPrimitive } from 'cmdk';
 import { SearchIcon } from 'lucide-react';
-import * as React from 'react';
 
 import {
   Dialog,
@@ -151,11 +151,11 @@ function CommandShortcut({ className, ...props }: React.ComponentProps<'span'>) 
 export {
   Command,
   CommandDialog,
-  CommandInput,
-  CommandList,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
-  CommandShortcut,
+  CommandList,
   CommandSeparator,
+  CommandShortcut,
 };

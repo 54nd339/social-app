@@ -1,6 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import {
+  Bell,
   Bookmark,
   Compass,
   Eye,
@@ -8,14 +12,10 @@ import {
   Home,
   MessageCircle,
   Moon,
-  Bell,
   PenSquare,
   Settings,
   Sun,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useTheme } from 'next-themes';
-import { useEffect } from 'react';
 
 import {
   CommandDialog,

@@ -1,8 +1,8 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-import { and, eq, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { and, eq, sql } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
 
 import { db } from '@/lib/db';
 import { getUserByClerkId } from '@/lib/db/queries/user.queries';
@@ -11,8 +11,8 @@ import {
   collections,
   comments,
   pollOptions,
-  pollVotes,
   polls,
+  pollVotes,
   postEditHistory,
   postMedia,
   posts,
@@ -20,10 +20,10 @@ import {
   shares,
 } from '@/lib/db/schema';
 import {
-  createPostSchema,
-  editPostSchema,
   type CreatePostInput,
+  createPostSchema,
   type EditPostInput,
+  editPostSchema,
 } from '@/lib/validators/post';
 
 async function getAuthenticatedUser() {

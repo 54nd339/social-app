@@ -1,5 +1,5 @@
+import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { NextResponse, type NextRequest } from 'next/server';
 
 import { getFeedPosts } from '@/lib/db/queries/post.queries';
 import { getUserByClerkId } from '@/lib/db/queries/user.queries';

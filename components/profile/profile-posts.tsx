@@ -1,9 +1,9 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { FileText, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { FileText, Loader2 } from 'lucide-react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeTime } from '@/lib/utils';

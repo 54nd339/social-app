@@ -1,7 +1,7 @@
 'use client';
 
-import { Avatar as AvatarPrimitive } from 'radix-ui';
 import * as React from 'react';
+import { Avatar as AvatarPrimitive } from 'radix-ui';
 
 import { cn } from '@/lib/utils';
 
@@ -93,4 +93,4 @@ function AvatarGroupCount({ className, ...props }: React.ComponentProps<'div'>) 
   );
 }
 
-export { Avatar, AvatarImage, AvatarFallback, AvatarBadge, AvatarGroup, AvatarGroupCount };
+export { Avatar, AvatarBadge, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarImage };

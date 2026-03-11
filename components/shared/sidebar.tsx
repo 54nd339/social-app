@@ -1,8 +1,10 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Activity,
+  Bell,
   Bookmark,
   Compass,
   Eye,
@@ -10,13 +12,11 @@ import {
   Flame,
   Home,
   MessageCircle,
-  Bell,
   PenSquare,
   Settings,
   User,
 } from 'lucide-react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

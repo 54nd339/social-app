@@ -1,6 +1,6 @@
-import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
 
 import { AppProviders } from '@/components/providers/app-providers';
 import { APP_DESCRIPTION, APP_NAME } from '@/lib/constants';

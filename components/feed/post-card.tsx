@@ -1,7 +1,7 @@
 'use client';
 
-import { useUser } from '@clerk/nextjs';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import Link from 'next/link';
 import {
   Bookmark,
   ChevronDown,
@@ -12,9 +12,9 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
 import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';

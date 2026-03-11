@@ -1,13 +1,13 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
 
 import { db } from '@/lib/db';
 import { getUserByClerkId, isUsernameTaken } from '@/lib/db/queries/user.queries';
 import { userInterests, users } from '@/lib/db/schema';
-import { onboardingSchema, type OnboardingInput } from '@/lib/validators/user';
+import { type OnboardingInput, onboardingSchema } from '@/lib/validators/user';
 
 export async function completeOnboarding(input: OnboardingInput) {
   const { userId: clerkId } = await auth();

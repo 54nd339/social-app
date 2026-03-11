@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm';
 import { headers } from 'next/headers';
+import { eq } from 'drizzle-orm';
 import { Webhook } from 'svix';
 
 import { db } from '@/lib/db';

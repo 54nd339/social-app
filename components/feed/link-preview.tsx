@@ -1,5 +1,5 @@
-import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
+import { ExternalLink } from 'lucide-react';
 
 interface LinkPreviewProps {
   url: string;

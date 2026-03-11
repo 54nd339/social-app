@@ -1,8 +1,8 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { and, eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
 
 import { db } from '@/lib/db';
 import { getUserByClerkId } from '@/lib/db/queries/user.queries';

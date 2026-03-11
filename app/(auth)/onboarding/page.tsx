@@ -1,5 +1,5 @@
-import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { auth } from '@clerk/nextjs/server';
 
 import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 

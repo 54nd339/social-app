@@ -1,8 +1,8 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { Flame, Loader2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { Flame, Loader2 } from 'lucide-react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import type { FeedPost } from '@/lib/db/queries/post.queries';

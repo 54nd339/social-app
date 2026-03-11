@@ -1,7 +1,8 @@
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import nextTs from 'eslint-config-next/typescript';
-import importPlugin from 'eslint-plugin-import';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -9,7 +10,8 @@ const eslintConfig = defineConfig([
   globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
   {
     plugins: {
-      import: importPlugin,
+      'simple-import-sort': simpleImportSort,
+      'unused-imports': unusedImports,
     },
     rules: {
       'no-console': ['error', { allow: ['warn', 'error'] }],
@@ -18,16 +20,18 @@ const eslintConfig = defineConfig([
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      'import/order': [
+      'simple-import-sort/imports': [
         'error',
         {
-          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
-          'newlines-between': 'always',
-          alphabetize: { order: 'asc', caseInsensitive: true },
+          groups: [
+            ['^react', '^next', '^[a-z]', '^@[^/]'],
+            ['^@/components', '^@/lib', '^@/providers', '^@/stores', '^@/hooks', '^@/types'],
+            ['^\\.'],
+          ],
         },
       ],
-      'import/newline-after-import': 'error',
-      'import/no-duplicates': 'error',
+      'simple-import-sort/exports': 'error',
+      'unused-imports/no-unused-imports': 'error',
     },
   },
 ]);

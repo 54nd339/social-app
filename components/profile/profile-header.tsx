@@ -1,7 +1,7 @@
 'use client';
 
-import { Calendar, Link as LinkIcon, Lock, MapPin, Share2 } from 'lucide-react';
 import Image from 'next/image';
+import { Calendar, Link as LinkIcon, Lock, MapPin, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
