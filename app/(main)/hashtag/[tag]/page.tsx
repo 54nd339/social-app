@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { HashtagFeed } from './hashtag-feed';
+
 interface HashtagPageProps {
   params: Promise<{ tag: string }>;
 }
@@ -28,9 +30,7 @@ export default async function HashtagPage({ params }: HashtagPageProps) {
         <h1 className="text-lg font-semibold">#{tag}</h1>
         <p className="text-muted-foreground text-sm">Posts tagged with #{tag}</p>
       </div>
-      <div className="p-4">
-        <p className="text-muted-foreground text-sm">No posts yet.</p>
-      </div>
+      <HashtagFeed tag={tag} />
     </div>
   );
 }

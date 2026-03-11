@@ -2,18 +2,20 @@
 
 import { revalidatePath } from 'next/cache';
 import { and, eq, sql } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
 
+import { createNotification } from '@/lib/actions/notification.helper';
+import { getAuthenticatedUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 import {
   collectionItems,
   collections,
   comments,
+  hashtags,
   pollOptions,
   polls,
   pollVotes,
   postEditHistory,
+  postHashtags,
   postMedia,
   posts,
   reactions,
@@ -25,16 +27,6 @@ import {
   type EditPostInput,
   editPostSchema,
 } from '@/lib/validators/post';
-
-async function getAuthenticatedUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
-
-  return user;
-}
 
 export async function createPost(input: CreatePostInput) {
   const user = await getAuthenticatedUser();
@@ -89,6 +81,31 @@ export async function createPost(input: CreatePostInput) {
           order: idx,
         })),
       );
+    }
+  }
+
+  // Extract and save hashtags
+  const hashtagMatches = validated.content.match(/#(\w+)/g);
+  if (hashtagMatches && hashtagMatches.length > 0) {
+    const uniqueTags = [...new Set(hashtagMatches.map((h) => h.slice(1).toLowerCase()))];
+
+    for (const tag of uniqueTags) {
+      // Upsert the hashtag
+      const [ht] = await db
+        .insert(hashtags)
+        .values({ name: tag })
+        .onConflictDoUpdate({
+          target: hashtags.name,
+          set: { postCount: sql`${hashtags.postCount} + 1` },
+        })
+        .returning({ id: hashtags.id });
+
+      if (ht) {
+        await db
+          .insert(postHashtags)
+          .values({ postId: post.id, hashtagId: ht.id })
+          .onConflictDoNothing();
+      }
     }
   }
 
@@ -180,6 +197,38 @@ export async function toggleReaction(
     entityType,
     reactionType,
   });
+
+  if (entityType === 'post') {
+    const [post] = await db
+      .select({ authorId: posts.authorId })
+      .from(posts)
+      .where(eq(posts.id, entityId))
+      .limit(1);
+    if (post) {
+      await createNotification({
+        recipientId: post.authorId,
+        actorId: user.id,
+        type: 'like',
+        entityId,
+        entityType: 'post',
+      });
+    }
+  } else if (entityType === 'comment') {
+    const [comment] = await db
+      .select({ authorId: comments.authorId })
+      .from(comments)
+      .where(eq(comments.id, entityId))
+      .limit(1);
+    if (comment) {
+      await createNotification({
+        recipientId: comment.authorId,
+        actorId: user.id,
+        type: 'like',
+        entityId,
+        entityType: 'comment',
+      });
+    }
+  }
 
   return { action: 'added' as const, reactionType };
 }
@@ -279,34 +328,4 @@ export async function votePoll(optionId: string) {
 
   revalidatePath('/');
   return { success: true };
-}
-
-export async function addComment(postId: string, content: string, parentId?: string) {
-  const user = await getAuthenticatedUser();
-
-  let depth = 0;
-  if (parentId) {
-    const [parent] = await db
-      .select({ depth: comments.depth })
-      .from(comments)
-      .where(eq(comments.id, parentId))
-      .limit(1);
-
-    if (!parent) throw new Error('Parent comment not found');
-    depth = parent.depth + 1;
-  }
-
-  const [comment] = await db
-    .insert(comments)
-    .values({
-      postId,
-      authorId: user.id,
-      content,
-      parentId: parentId ?? null,
-      depth,
-    })
-    .returning({ id: comments.id });
-
-  revalidatePath('/');
-  return { id: comment!.id };
 }

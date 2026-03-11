@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { CollabInvite } from '@/components/feed/collab-invite';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -44,19 +44,8 @@ import {
 } from '@/lib/constants';
 import { useUploadThing } from '@/lib/uploadthing-client';
 import { cn } from '@/lib/utils';
+import { useCircles } from '@/hooks/use-circles';
 import type { PostVisibility } from '@/types';
-
-interface CircleOption {
-  id: string;
-  name: string;
-  emoji: string | null;
-}
-
-async function fetchCircles(): Promise<CircleOption[]> {
-  const res = await fetch('/api/circles');
-  if (!res.ok) return [];
-  return res.json();
-}
 
 interface PostComposerProps {
   className?: string;
@@ -101,11 +90,7 @@ export function PostComposer({ className }: PostComposerProps) {
     avatarUrl: string | null;
   } | null>(null);
 
-  const { data: circles } = useQuery({
-    queryKey: ['circles'],
-    queryFn: fetchCircles,
-    enabled: visibility === 'circle',
-  });
+  const { data: circles } = useCircles(visibility === 'circle');
 
   const { startUpload } = useUploadThing('postImage');
 

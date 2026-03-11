@@ -9,6 +9,7 @@ import {
   comments,
   follows,
   messages,
+  postMedia,
   posts,
   reactions,
   stories,
@@ -41,6 +42,7 @@ export async function GET() {
     userCollections,
     userCollectionItems,
     userVaultItems,
+    userPostMedia,
   ] = await Promise.all([
     db.select().from(posts).where(eq(posts.authorId, userId)),
     db.select().from(comments).where(eq(comments.authorId, userId)),
@@ -59,6 +61,16 @@ export async function GET() {
       .select({ id: vaultItems.id, type: vaultItems.type, createdAt: vaultItems.createdAt })
       .from(vaultItems)
       .where(eq(vaultItems.userId, userId)),
+    db
+      .select({
+        postId: postMedia.postId,
+        url: postMedia.url,
+        type: postMedia.type,
+        order: postMedia.order,
+      })
+      .from(postMedia)
+      .innerJoin(posts, eq(postMedia.postId, posts.id))
+      .where(eq(posts.authorId, userId)),
   ]);
 
   const exportData = {
@@ -79,6 +91,9 @@ export async function GET() {
       content: p.content,
       visibility: p.visibility,
       createdAt: p.createdAt,
+      media: userPostMedia
+        .filter((m) => m.postId === p.id)
+        .map((m) => ({ url: m.url, type: m.type })),
     })),
     comments: userComments.map((c) => ({
       id: c.id,
@@ -102,6 +117,7 @@ export async function GET() {
       conversationId: m.conversationId,
       content: m.content,
       type: m.type,
+      mediaUrl: m.mediaUrl,
       createdAt: m.createdAt,
     })),
     followers: userFollowers.length,

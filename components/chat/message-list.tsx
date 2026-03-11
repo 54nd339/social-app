@@ -1,12 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { Loader2 } from 'lucide-react';
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { Check, Edit3, Loader2, MoreHorizontal, Trash2, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { deleteMessageForEveryone, editMessage } from '@/lib/actions/chat-extra.actions';
 import type { ChatMessage } from '@/lib/db/queries/chat.queries';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { usePusherChannel } from '@/hooks/use-pusher-channel';
@@ -52,6 +62,28 @@ export function MessageList({ conversationId, currentUserId }: MessageListProps)
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+
+  const { mutate: handleDeleteMsg } = useMutation({
+    mutationFn: (messageId: string) => deleteMessageForEveryone(messageId),
+    onSuccess: () => {
+      toast.success('Message deleted');
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    },
+    onError: () => toast.error('Failed to delete'),
+  });
+
+  const { mutate: handleEditMsg } = useMutation({
+    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
+      editMessage(messageId, content),
+    onSuccess: () => {
+      toast.success('Message edited');
+      setEditingMsgId(null);
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+    },
+    onError: () => toast.error('Failed to edit'),
+  });
 
   const handleNewMessage = useCallback(
     (data: unknown) => {
@@ -145,8 +177,13 @@ export function MessageList({ conversationId, currentUserId }: MessageListProps)
             );
           }
 
+          const isEditing = editingMsgId === msg.id;
+
           return (
-            <div key={msg.id} className={cn('flex items-end gap-2', isOwn && 'flex-row-reverse')}>
+            <div
+              key={msg.id}
+              className={cn('group flex items-end gap-2', isOwn && 'flex-row-reverse')}
+            >
               {!isOwn && (
                 <div className="w-7 shrink-0">
                   {showAvatar && (
@@ -167,45 +204,108 @@ export function MessageList({ conversationId, currentUserId }: MessageListProps)
                   </p>
                 )}
 
-                <div
-                  className={cn(
-                    'rounded-2xl px-3 py-2 text-sm',
-                    isOwn
-                      ? 'bg-primary text-primary-foreground rounded-br-sm'
-                      : 'bg-muted rounded-bl-sm',
-                  )}
-                >
-                  {msg.type === 'text' && msg.content && (
-                    <p className="break-words whitespace-pre-wrap">{msg.content}</p>
-                  )}
-                  {msg.type === 'image' && msg.mediaUrl && (
-                    <Image
-                      src={msg.mediaUrl}
-                      alt=""
-                      width={400}
-                      height={300}
-                      className="max-w-full rounded-lg"
-                      unoptimized
+                {isEditing ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="h-8 text-sm"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && editContent.trim()) {
+                          handleEditMsg({ messageId: msg.id, content: editContent });
+                        }
+                        if (e.key === 'Escape') setEditingMsgId(null);
+                      }}
                     />
-                  )}
-                  {msg.type === 'gif' && msg.mediaUrl && (
-                    <Image
-                      src={msg.mediaUrl}
-                      alt="GIF"
-                      width={250}
-                      height={200}
-                      className="max-w-full rounded-lg"
-                      unoptimized
-                    />
-                  )}
-                  {msg.type === 'voice' && msg.mediaUrl && (
-                    <audio controls src={msg.mediaUrl} className="max-w-full" />
-                  )}
-                  {msg.type === 'doc' && (
-                    <p className="text-xs underline">{msg.fileName ?? 'Document'}</p>
-                  )}
-                  {msg.isViewOnce && <p className="text-[10px] opacity-60">View once</p>}
-                </div>
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      onClick={() => handleEditMsg({ messageId: msg.id, content: editContent })}
+                    >
+                      <Check className="size-3.5" />
+                    </Button>
+                    <Button size="icon-xs" variant="ghost" onClick={() => setEditingMsgId(null)}>
+                      <X className="size-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div
+                      className={cn(
+                        'rounded-2xl px-3 py-2 text-sm',
+                        isOwn
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                          : 'bg-muted rounded-bl-sm',
+                      )}
+                    >
+                      {msg.type === 'text' && msg.content && (
+                        <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+                      )}
+                      {msg.type === 'image' && msg.mediaUrl && (
+                        <Image
+                          src={msg.mediaUrl}
+                          alt=""
+                          width={400}
+                          height={300}
+                          className="max-w-full rounded-lg"
+                          unoptimized
+                        />
+                      )}
+                      {msg.type === 'gif' && msg.mediaUrl && (
+                        <Image
+                          src={msg.mediaUrl}
+                          alt="GIF"
+                          width={250}
+                          height={200}
+                          className="max-w-full rounded-lg"
+                          unoptimized
+                        />
+                      )}
+                      {msg.type === 'voice' && msg.mediaUrl && (
+                        <audio controls src={msg.mediaUrl} className="max-w-full" />
+                      )}
+                      {msg.type === 'doc' && (
+                        <p className="text-xs underline">{msg.fileName ?? 'Document'}</p>
+                      )}
+                      {msg.isViewOnce && <p className="text-[10px] opacity-60">View once</p>}
+                    </div>
+
+                    {isOwn && msg.type === 'text' && (
+                      <div className="absolute -top-2 right-0 hidden group-hover:block">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="secondary"
+                              size="icon-xs"
+                              className="size-5 rounded-full shadow-sm"
+                            >
+                              <MoreHorizontal className="size-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-32">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setEditingMsgId(msg.id);
+                                setEditContent(msg.content ?? '');
+                              }}
+                            >
+                              <Edit3 className="size-3.5" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDeleteMsg(msg.id)}
+                            >
+                              <Trash2 className="size-3.5" />
+                              Delete for everyone
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <p className={cn('text-muted-foreground px-1 text-[10px]', isOwn && 'text-right')}>
                   {formatRelativeTime(msg.createdAt)}

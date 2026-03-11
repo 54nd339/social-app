@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { CircleDashed, Plus, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,13 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createCircle, deleteCircle } from '@/lib/actions/circle.actions';
-import type { CircleWithCount } from '@/lib/db/queries/circle.queries';
-
-async function fetchCircles(): Promise<CircleWithCount[]> {
-  const res = await fetch('/api/circles');
-  if (!res.ok) throw new Error('Failed to fetch circles');
-  return res.json();
-}
+import { useCircles } from '@/hooks/use-circles';
 
 function CircleSkeleton() {
   return (
@@ -40,10 +34,7 @@ export function CircleGrid() {
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
 
-  const { data: circleList, isLoading } = useQuery({
-    queryKey: ['circles'],
-    queryFn: fetchCircles,
-  });
+  const { data: circleList, isLoading } = useCircles();
 
   const { mutate: create, isPending: isCreating } = useMutation({
     mutationFn: () => createCircle({ name, emoji: emoji || undefined }),

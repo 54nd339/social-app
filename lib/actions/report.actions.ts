@@ -1,9 +1,7 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-
+import { getAuthenticatedUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 import { reports } from '@/lib/db/schema';
 
 export async function submitReport(input: {
@@ -12,11 +10,7 @@ export async function submitReport(input: {
   reason: 'abuse' | 'spam' | 'harassment' | 'impersonation' | 'other';
   description?: string;
 }) {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
+  const user = await getAuthenticatedUser();
 
   const [report] = await db
     .insert(reports)

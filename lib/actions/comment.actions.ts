@@ -2,27 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
 
+import { createNotification } from '@/lib/actions/notification.helper';
+import { getAuthenticatedUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
-import { comments } from '@/lib/db/schema';
+import { comments, posts } from '@/lib/db/schema';
 import {
   type CreateCommentInput,
   createCommentSchema,
   type EditCommentInput,
   editCommentSchema,
 } from '@/lib/validators/comment';
-
-async function getAuthenticatedUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
-
-  return user;
-}
 
 export async function createComment(input: CreateCommentInput) {
   const user = await getAuthenticatedUser();
@@ -50,6 +40,22 @@ export async function createComment(input: CreateCommentInput) {
       depth,
     })
     .returning({ id: comments.id, createdAt: comments.createdAt });
+
+  const [post] = await db
+    .select({ authorId: posts.authorId })
+    .from(posts)
+    .where(eq(posts.id, validated.postId))
+    .limit(1);
+
+  if (post) {
+    await createNotification({
+      recipientId: post.authorId,
+      actorId: user.id,
+      type: 'comment',
+      entityId: comment!.id,
+      entityType: 'comment',
+    });
+  }
 
   revalidatePath(`/post/${validated.postId}`);
   return {

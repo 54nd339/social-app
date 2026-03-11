@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { addCircleMember, removeCircleMember } from '@/lib/actions/circle.actions';
 import type { CircleMember } from '@/lib/db/queries/circle.queries';
+import { useUserSearch } from '@/hooks/use-user-search';
 
 interface CircleMemberManagerProps {
   circleId: string;
@@ -29,32 +30,22 @@ async function fetchMembers(circleId: string): Promise<CircleMember[]> {
   return res.json();
 }
 
-interface SearchResult {
-  id: string;
-  username: string;
-  displayName: string | null;
-  avatarUrl: string | null;
-}
-
-async function searchFollowing(query: string): Promise<SearchResult[]> {
-  if (!query.trim()) return [];
-  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=users&limit=10`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.users ?? [];
-}
-
 export function CircleMemberManager({ circleId }: CircleMemberManagerProps) {
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
 
   const { data: members, isLoading } = useQuery({
     queryKey: ['circle-members', circleId],
     queryFn: () => fetchMembers(circleId),
   });
+
+  const { data: rawSearchResults = [], isLoading: isSearching } = useUserSearch(
+    searchQuery,
+    addOpen,
+  );
+  const memberIds = new Set(members?.map((m) => m.id) ?? []);
+  const searchResults = rawSearchResults.filter((r) => !memberIds.has(r.id));
 
   const { mutate: add, isPending: isAdding } = useMutation({
     mutationFn: (userId: string) => addCircleMember({ circleId, userId }),
@@ -75,22 +66,6 @@ export function CircleMemberManager({ circleId }: CircleMemberManagerProps) {
     },
     onError: (err: Error) => toast.error(err.message),
   });
-
-  async function handleSearch(q: string) {
-    setSearchQuery(q);
-    if (!q.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setIsSearching(true);
-    try {
-      const results = await searchFollowing(q);
-      const memberIds = new Set(members?.map((m) => m.id) ?? []);
-      setSearchResults(results.filter((r) => !memberIds.has(r.id)));
-    } finally {
-      setIsSearching(false);
-    }
-  }
 
   if (isLoading) {
     return (
@@ -119,7 +94,7 @@ export function CircleMemberManager({ circleId }: CircleMemberManagerProps) {
             </DialogHeader>
             <Input
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search users..."
               autoFocus
             />

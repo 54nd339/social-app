@@ -1,17 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { auth } from '@clerk/nextjs/server';
 
+import { getAuthenticatedUser } from '@/lib/auth';
 import { markNotificationsRead } from '@/lib/db/queries/notification.queries';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 
 export async function markAllNotificationsRead() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
+  const user = await getAuthenticatedUser();
 
   await markNotificationsRead(user.id);
   revalidatePath('/notifications');
@@ -19,11 +14,7 @@ export async function markAllNotificationsRead() {
 }
 
 export async function markNotificationRead(notificationId: string) {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
+  const user = await getAuthenticatedUser();
 
   await markNotificationsRead(user.id, [notificationId]);
   return { success: true };

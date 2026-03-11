@@ -4,6 +4,7 @@ import { Webhook } from 'svix';
 
 import { db } from '@/lib/db';
 import { collections, users } from '@/lib/db/schema';
+import { sendWelcomeEmail } from '@/lib/emails/welcome';
 import { env } from '@/lib/env';
 
 interface ClerkUserPayload {
@@ -65,6 +66,15 @@ export async function POST(req: Request) {
         isDefault: true,
         order: 0,
       });
+
+      const email = data.email_addresses[0]?.email_address;
+      if (email) {
+        sendWelcomeEmail({
+          email,
+          username: newUser.username,
+          displayName: newUser.displayName,
+        }).catch(() => {});
+      }
     }
   }
 

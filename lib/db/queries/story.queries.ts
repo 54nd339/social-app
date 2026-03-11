@@ -5,6 +5,7 @@ import { stories, storyViews, users } from '@/lib/db/schema';
 
 export interface StoryRing {
   userId: string;
+  clerkId: string;
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
@@ -45,6 +46,7 @@ export async function getStoryRings(currentUserId: string): Promise<StoryRing[]>
     db
       .select({
         id: users.id,
+        clerkId: users.clerkId,
         username: users.username,
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
@@ -91,6 +93,7 @@ export async function getStoryRings(currentUserId: string): Promise<StoryRing[]>
 
     const ring: StoryRing = {
       userId: author.id,
+      clerkId: author.clerkId,
       username: author.username,
       displayName: author.displayName,
       avatarUrl: author.avatarUrl,

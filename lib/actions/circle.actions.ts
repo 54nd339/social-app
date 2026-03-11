@@ -2,27 +2,16 @@
 
 import { revalidatePath } from 'next/cache';
 import { and, eq, sql } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
 
+import { getAuthenticatedUser } from '@/lib/auth';
 import { MAX_CIRCLE_MEMBERS } from '@/lib/constants';
 import { db } from '@/lib/db';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 import { circleMembers, circles } from '@/lib/db/schema';
 import {
   addCircleMemberSchema,
   createCircleSchema,
   updateCircleSchema,
 } from '@/lib/validators/circle';
-
-async function getAuthenticatedUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
-
-  return user;
-}
 
 export async function createCircle(input: { name: string; emoji?: string }) {
   const user = await getAuthenticatedUser();

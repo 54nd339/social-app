@@ -1,33 +1,18 @@
-'use client';
+import type { Metadata } from 'next';
+import { auth } from '@clerk/nextjs/server';
 
-import { CheckCheck } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 
-import { NotificationList } from '@/components/notifications';
-import { Button } from '@/components/ui/button';
-import { markAllNotificationsRead } from '@/lib/actions/notification.actions';
+import { NotificationsClient } from './notifications-client';
 
-export default function NotificationsPage() {
-  const queryClient = useQueryClient();
+export const metadata: Metadata = {
+  title: 'Notifications',
+  description: 'Your notifications on Haven.',
+};
 
-  const { mutate: markAll, isPending } = useMutation({
-    mutationFn: markAllNotificationsRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-  });
+export default async function NotificationsPage() {
+  const { userId: clerkId } = await auth();
+  const user = clerkId ? await getUserByClerkId(clerkId) : null;
 
-  return (
-    <div className="mx-auto max-w-2xl">
-      <div className="bg-background/80 sticky top-0 z-10 flex items-center justify-between border-b px-4 py-3 backdrop-blur-sm">
-        <h1 className="text-lg font-semibold">Notifications</h1>
-        <Button variant="ghost" size="sm" disabled={isPending} onClick={() => markAll()}>
-          <CheckCheck className="size-4" />
-          Mark all read
-        </Button>
-      </div>
-
-      <NotificationList />
-    </div>
-  );
+  return <NotificationsClient userId={user?.id} />;
 }

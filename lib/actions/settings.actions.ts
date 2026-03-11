@@ -2,10 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
 
+import { getAuthenticatedUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 import { users } from '@/lib/db/schema';
 import {
   type PrivacySettingsInput,
@@ -15,16 +14,6 @@ import {
   type WellbeingSettingsInput,
   wellbeingSettingsSchema,
 } from '@/lib/validators/settings';
-
-async function getAuthenticatedUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
-
-  return user;
-}
 
 export async function updateProfileSettings(input: ProfileSettingsInput) {
   const user = await getAuthenticatedUser();

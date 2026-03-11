@@ -1,30 +1,21 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { StoryRing as StoryRingType } from '@/lib/db/queries/story.queries';
 import { cn } from '@/lib/utils';
-
-async function fetchStoryRings(): Promise<StoryRingType[]> {
-  const res = await fetch('/api/stories');
-  if (!res.ok) throw new Error('Failed to fetch stories');
-  return res.json();
-}
+import { useStoryRings } from '@/hooks/use-stories';
 
 interface StoryRingProps {
   onView: (userId: string) => void;
-  onCreateStory: () => void;
+  onCreateStory?: () => void;
+  createStorySlot?: React.ReactNode;
 }
 
-export function StoryRings({ onView, onCreateStory }: StoryRingProps) {
-  const { data: rings, isLoading } = useQuery({
-    queryKey: ['story-rings'],
-    queryFn: fetchStoryRings,
-  });
+export function StoryRings({ onView, onCreateStory, createStorySlot }: StoryRingProps) {
+  const { data: rings, isLoading } = useStoryRings();
 
   if (isLoading) {
     return (
@@ -42,14 +33,16 @@ export function StoryRings({ onView, onCreateStory }: StoryRingProps) {
   return (
     <ScrollArea className="border-b">
       <div className="flex gap-4 p-4">
-        <button onClick={onCreateStory} className="flex flex-col items-center gap-1.5">
-          <div className="border-muted-foreground/30 relative flex size-16 items-center justify-center rounded-full border-2 border-dashed">
-            <Plus className="text-muted-foreground size-6" />
-          </div>
-          <span className="text-muted-foreground w-16 truncate text-center text-[11px]">
-            Add story
-          </span>
-        </button>
+        {createStorySlot ?? (
+          <button onClick={onCreateStory} className="flex flex-col items-center gap-1.5">
+            <div className="border-muted-foreground/30 relative flex size-16 items-center justify-center rounded-full border-2 border-dashed">
+              <Plus className="text-muted-foreground size-6" />
+            </div>
+            <span className="text-muted-foreground w-16 truncate text-center text-[11px]">
+              Add story
+            </span>
+          </button>
+        )}
 
         {rings?.map((ring) => (
           <button

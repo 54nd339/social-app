@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Bell, Loader2 } from 'lucide-react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import type { NotificationItem as NotifItem } from '@/lib/db/queries/notification.queries';
+import { usePusherChannel } from '@/hooks/use-pusher-channel';
 
 import { NotificationItem } from './notification-item';
 
@@ -40,8 +41,23 @@ function NotifSkeleton() {
   );
 }
 
-export function NotificationList() {
+interface NotificationListProps {
+  userId?: string;
+}
+
+export function NotificationList({ userId }: NotificationListProps) {
+  const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const handleNewNotification = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  }, [queryClient]);
+
+  usePusherChannel(
+    userId ? `private-user-${userId}` : null,
+    'new-notification',
+    handleNewNotification,
+  );
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ['notifications'],

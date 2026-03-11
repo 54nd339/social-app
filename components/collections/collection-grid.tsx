@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FolderHeart, Plus, Trash2 } from 'lucide-react';
+import { Edit2, FolderHeart, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +16,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { createCollection, deleteCollection } from '@/lib/actions/collection.actions';
+import {
+  createCollection,
+  deleteCollection,
+  updateCollection,
+} from '@/lib/actions/collection.actions';
 import type { CollectionWithCount } from '@/lib/db/queries/collection.queries';
 
 async function fetchCollections(): Promise<CollectionWithCount[]> {
@@ -40,6 +43,10 @@ export function CollectionGrid() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
+  const [editOpen, setEditOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmoji, setEditEmoji] = useState('');
 
   const { data: cols, isLoading } = useQuery({
     queryKey: ['collections'],
@@ -62,6 +69,16 @@ export function CollectionGrid() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       toast.success('Collection deleted');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const { mutate: update, isPending: isUpdating } = useMutation({
+    mutationFn: () => updateCollection(editId!, editName, editEmoji || undefined),
+    onSuccess: () => {
+      setEditOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+      toast.success('Collection updated');
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -97,16 +114,25 @@ export function CollectionGrid() {
               </p>
             </div>
 
-            {!col.isDefault && (
+            <div className="relative z-10 flex items-center gap-0.5 opacity-0 group-hover:opacity-100">
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="relative z-10 opacity-0 group-hover:opacity-100"
-                onClick={() => remove(col.id)}
+                onClick={() => {
+                  setEditId(col.id);
+                  setEditName(col.name);
+                  setEditEmoji(col.emoji ?? '');
+                  setEditOpen(true);
+                }}
               >
-                <Trash2 className="text-destructive size-3.5" />
+                <Edit2 className="size-3.5" />
               </Button>
-            )}
+              {!col.isDefault && (
+                <Button variant="ghost" size="icon-sm" onClick={() => remove(col.id)}>
+                  <Trash2 className="text-destructive size-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -153,6 +179,37 @@ export function CollectionGrid() {
             />
             <Button type="submit" disabled={!name.trim() || isCreating} className="w-full">
               Create
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit collection</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (editName.trim()) update();
+            }}
+            className="space-y-3"
+          >
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="Collection name"
+            />
+            <Input
+              value={editEmoji}
+              onChange={(e) => setEditEmoji(e.target.value)}
+              placeholder="Emoji (optional)"
+              maxLength={2}
+              className="w-20"
+            />
+            <Button type="submit" disabled={!editName.trim() || isUpdating} className="w-full">
+              Save
             </Button>
           </form>
         </DialogContent>

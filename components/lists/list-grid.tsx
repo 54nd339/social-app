@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { List, Plus, Trash2 } from 'lucide-react';
+import { Edit2, List, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { createList, deleteList } from '@/lib/actions/list.actions';
+import { createList, deleteList, updateList } from '@/lib/actions/list.actions';
 import type { UserListWithCount } from '@/lib/db/queries/list.queries';
 
 async function fetchLists(): Promise<UserListWithCount[]> {
@@ -30,6 +30,9 @@ export function ListGrid() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
+  const [editListId, setEditListId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmoji, setEditEmoji] = useState('');
 
   const { data: lists, isLoading } = useQuery({
     queryKey: ['user-lists'],
@@ -53,6 +56,19 @@ export function ListGrid() {
       queryClient.invalidateQueries({ queryKey: ['user-lists'] });
       toast.success('List deleted');
     },
+  });
+
+  const { mutate: update, isPending: isUpdating } = useMutation({
+    mutationFn: ({ listId, name, emoji }: { listId: string; name: string; emoji?: string }) =>
+      updateList(listId, name, emoji || undefined),
+    onSuccess: () => {
+      setEditListId(null);
+      setEditName('');
+      setEditEmoji('');
+      queryClient.invalidateQueries({ queryKey: ['user-lists'] });
+      toast.success('List updated');
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   if (isLoading) {
@@ -89,14 +105,32 @@ export function ListGrid() {
               </p>
             </div>
 
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="relative z-10 opacity-0 group-hover:opacity-100"
-              onClick={() => remove(list.id)}
-            >
-              <Trash2 className="text-destructive size-3.5" />
-            </Button>
+            <div className="relative z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setEditListId(list.id);
+                  setEditName(list.name);
+                  setEditEmoji(list.emoji ?? '');
+                }}
+              >
+                <Edit2 className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(list.id);
+                }}
+              >
+                <Trash2 className="text-destructive size-3.5" />
+              </Button>
+            </div>
           </div>
         ))}
       </div>
@@ -141,6 +175,52 @@ export function ListGrid() {
             />
             <Button type="submit" disabled={!name.trim() || isCreating} className="w-full">
               Create
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!editListId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditListId(null);
+            setEditName('');
+            setEditEmoji('');
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit list</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (editListId && editName.trim()) {
+                update({
+                  listId: editListId,
+                  name: editName.trim(),
+                  emoji: editEmoji || undefined,
+                });
+              }
+            }}
+            className="space-y-3"
+          >
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              placeholder="List name"
+            />
+            <Input
+              value={editEmoji}
+              onChange={(e) => setEditEmoji(e.target.value)}
+              placeholder="Emoji (optional)"
+              maxLength={2}
+              className="w-20"
+            />
+            <Button type="submit" disabled={!editName.trim() || isUpdating} className="w-full">
+              Save
             </Button>
           </form>
         </DialogContent>

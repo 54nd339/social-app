@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Phone, Video } from 'lucide-react';
+import { ArrowLeft, ImageIcon, Phone, Video } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
+import { MediaGallery } from '@/components/chat/media-gallery';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ConversationPreview } from '@/lib/db/queries/chat.queries';
 
@@ -61,6 +63,21 @@ export function ConversationHeader({ conversationId }: ConversationHeaderProps) 
       )}
 
       <div className="flex items-center gap-1">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon-sm" aria-label="Shared media">
+              <ImageIcon className="size-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-80 p-0 sm:w-96">
+            <SheetHeader className="border-b px-4 py-3">
+              <SheetTitle>Shared Media</SheetTitle>
+            </SheetHeader>
+            <div className="overflow-y-auto">
+              <MediaGallery conversationId={conversationId} />
+            </div>
+          </SheetContent>
+        </Sheet>
         <Button variant="ghost" size="icon-sm" disabled>
           <Phone className="size-4" />
         </Button>

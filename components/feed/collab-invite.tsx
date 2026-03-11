@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useUserSearch } from '@/hooks/use-user-search';
 
 interface CollabUser {
   id: string;
@@ -26,34 +27,10 @@ interface CollabInviteProps {
   onSelect: (user: CollabUser | null) => void;
 }
 
-async function searchUsers(query: string): Promise<CollabUser[]> {
-  if (!query.trim()) return [];
-  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=users&limit=8`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.users ?? [];
-}
-
 export function CollabInvite({ selectedUser, onSelect }: CollabInviteProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<CollabUser[]>([]);
-  const [searching, setSearching] = useState(false);
-
-  async function handleSearch(q: string) {
-    setQuery(q);
-    if (!q.trim()) {
-      setResults([]);
-      return;
-    }
-    setSearching(true);
-    try {
-      const users = await searchUsers(q);
-      setResults(users);
-    } finally {
-      setSearching(false);
-    }
-  }
+  const { data: results = [], isLoading: searching } = useUserSearch(query, open);
 
   if (selectedUser) {
     return (
@@ -89,7 +66,7 @@ export function CollabInvite({ selectedUser, onSelect }: CollabInviteProps) {
         </DialogHeader>
         <Input
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="Search users..."
           autoFocus
         />
@@ -106,7 +83,6 @@ export function CollabInvite({ selectedUser, onSelect }: CollabInviteProps) {
                 onSelect(u);
                 setOpen(false);
                 setQuery('');
-                setResults([]);
               }}
               className="hover:bg-accent flex w-full items-center gap-3 rounded-md px-2 py-2"
             >

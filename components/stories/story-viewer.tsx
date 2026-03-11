@@ -2,13 +2,21 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { X } from 'lucide-react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { MoreHorizontal, Trash2, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { useUser } from '@clerk/nextjs';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { viewStory } from '@/lib/actions/story.actions';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { deleteStory, viewStory } from '@/lib/actions/story.actions';
 import type { StoryItem, StoryRing } from '@/lib/db/queries/story.queries';
 import { formatRelativeTime } from '@/lib/utils';
 
@@ -26,12 +34,15 @@ interface StoryViewerProps {
 }
 
 export function StoryViewer({ rings, initialUserId, open, onOpenChange }: StoryViewerProps) {
+  const { user: clerkUser } = useUser();
+  const queryClient = useQueryClient();
   const [currentUserIdx, setCurrentUserIdx] = useState(() =>
     rings.findIndex((r) => r.userId === initialUserId),
   );
   const [currentStoryIdx, setCurrentStoryIdx] = useState(0);
 
   const currentRing = rings[currentUserIdx];
+  const isOwnStory = !!clerkUser && currentRing?.clerkId === clerkUser.id;
 
   const { data: stories } = useQuery({
     queryKey: ['user-stories', currentRing?.userId],
@@ -41,6 +52,17 @@ export function StoryViewer({ rings, initialUserId, open, onOpenChange }: StoryV
 
   const { mutate: markViewed } = useMutation({
     mutationFn: (storyId: string) => viewStory(storyId),
+  });
+
+  const { mutate: handleDeleteStory } = useMutation({
+    mutationFn: (storyId: string) => deleteStory(storyId),
+    onSuccess: () => {
+      toast.success('Story deleted');
+      queryClient.invalidateQueries({ queryKey: ['story-rings'] });
+      queryClient.invalidateQueries({ queryKey: ['user-stories', currentRing?.userId] });
+      goNext();
+    },
+    onError: () => toast.error('Failed to delete story'),
   });
 
   const currentStory = stories?.[currentStoryIdx];
@@ -131,6 +153,24 @@ export function StoryViewer({ rings, initialUserId, open, onOpenChange }: StoryV
               </p>
             )}
           </div>
+          {isOwnStory && currentStory && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" className="text-white hover:bg-white/20">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => handleDeleteStory(currentStory.id)}
+                >
+                  <Trash2 className="size-4" />
+                  Delete story
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <Button
             variant="ghost"
             size="icon-sm"

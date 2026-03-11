@@ -56,6 +56,8 @@ export const useWellbeingStore = create<WellbeingState>()(
         const elapsed = (Date.now() - state.sessionStartedAt) / 60000;
         const total = state.todayMinutes + elapsed;
 
+        set({ todayMinutes: total, sessionStartedAt: Date.now() });
+
         if (dailyLimitMinutes && total >= dailyLimitMinutes && !state.limitReached) {
           set({ limitReached: true });
         }

@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useQuery } from '@tanstack/react-query';
+import { Plus } from 'lucide-react';
 
-import type { StoryRing } from '@/lib/db/queries/story.queries';
+import { useStoryRings } from '@/hooks/use-stories';
 
+import { CreateStoryDialog } from './create-story-dialog';
 import { StoryRings } from './story-ring';
 
 const StoryViewer = dynamic(() => import('./story-viewer').then((m) => m.StoryViewer), {
@@ -13,34 +14,33 @@ const StoryViewer = dynamic(() => import('./story-viewer').then((m) => m.StoryVi
   loading: () => <div className="bg-muted h-40 animate-pulse rounded-lg" />,
 });
 
-async function fetchRings(): Promise<StoryRing[]> {
-  const res = await fetch('/api/stories');
-  if (!res.ok) throw new Error('Failed to fetch stories');
-  return res.json();
-}
-
 export function StoriesBar() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewUserId, setViewUserId] = useState<string | null>(null);
 
-  const { data: rings } = useQuery({
-    queryKey: ['story-rings'],
-    queryFn: fetchRings,
-  });
+  const { data: rings } = useStoryRings();
 
   function handleView(userId: string) {
     setViewUserId(userId);
     setViewerOpen(true);
   }
 
+  const createStorySlot = (
+    <CreateStoryDialog>
+      <button type="button" className="flex flex-col items-center gap-1.5">
+        <div className="border-muted-foreground/30 relative flex size-16 items-center justify-center rounded-full border-2 border-dashed">
+          <Plus className="text-muted-foreground size-6" />
+        </div>
+        <span className="text-muted-foreground w-16 truncate text-center text-[11px]">
+          Add story
+        </span>
+      </button>
+    </CreateStoryDialog>
+  );
+
   return (
     <>
-      <StoryRings
-        onView={handleView}
-        onCreateStory={() => {
-          // TODO: open story creation modal
-        }}
-      />
+      <StoryRings onView={handleView} createStorySlot={createStorySlot} />
       {rings && viewUserId && (
         <StoryViewer
           rings={rings}

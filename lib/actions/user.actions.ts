@@ -2,21 +2,16 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
 
+import { getAuthenticatedUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getUserByClerkId, isUsernameTaken } from '@/lib/db/queries/user.queries';
+import { isUsernameTaken } from '@/lib/db/queries/user.queries';
 import { userInterests, users } from '@/lib/db/schema';
 import { type OnboardingInput, onboardingSchema } from '@/lib/validators/user';
 
 export async function completeOnboarding(input: OnboardingInput) {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
+  const user = await getAuthenticatedUser();
   const validated = onboardingSchema.parse(input);
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found in database');
 
   const taken = await isUsernameTaken(validated.username, user.id);
   if (taken) throw new Error('Username is already taken');
@@ -45,18 +40,8 @@ export async function completeOnboarding(input: OnboardingInput) {
 }
 
 export async function checkUsernameAvailability(username: string) {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  const taken = await isUsernameTaken(username, user?.id);
+  const user = await getAuthenticatedUser();
+  const taken = await isUsernameTaken(username, user.id);
 
   return { available: !taken };
-}
-
-export async function getCurrentUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) return null;
-
-  return getUserByClerkId(clerkId);
 }

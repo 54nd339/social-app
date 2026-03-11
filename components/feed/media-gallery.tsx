@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 
+import { OptimizedImage } from '@/components/shared/optimized-image';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
@@ -50,10 +50,11 @@ export function MediaGallery({ media }: MediaGalleryProps) {
               )}
               onClick={() => setLightboxIndex(idx)}
             >
-              <Image
+              <OptimizedImage
                 src={item.url}
                 alt=""
                 fill
+                blurhash={item.blurhash}
                 className="object-cover transition-transform hover:scale-105"
                 sizes={media.length === 1 ? '600px' : '300px'}
               />
@@ -71,9 +72,10 @@ export function MediaGallery({ media }: MediaGalleryProps) {
         <DialogContent className="max-w-4xl border-0 bg-transparent p-0 shadow-none">
           {lightboxIndex !== null && media[lightboxIndex] && (
             <div className="relative aspect-auto max-h-[85vh]">
-              <Image
+              <OptimizedImage
                 src={media[lightboxIndex].url}
                 alt=""
+                blurhash={media[lightboxIndex].blurhash}
                 width={media[lightboxIndex].width ?? 1200}
                 height={media[lightboxIndex].height ?? 800}
                 className="h-auto max-h-[85vh] w-auto rounded-lg object-contain"

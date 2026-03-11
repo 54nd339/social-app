@@ -19,10 +19,11 @@ interface ShareSheetProps {
   url: string;
   title?: string;
   embedCode?: string;
+  onShared?: () => void;
   children?: React.ReactNode;
 }
 
-export function ShareSheet({ url, title, embedCode, children }: ShareSheetProps) {
+export function ShareSheet({ url, title, embedCode, onShared, children }: ShareSheetProps) {
   const [copied, setCopied] = useState(false);
   const [embedCopied, setEmbedCopied] = useState(false);
 
@@ -44,10 +45,12 @@ export function ShareSheet({ url, title, embedCode, children }: ShareSheetProps)
   async function nativeShare() {
     if (!navigator.share) {
       await copyLink();
+      onShared?.();
       return;
     }
     try {
       await navigator.share({ title: title ?? 'Check this out on Haven', url });
+      onShared?.();
     } catch {
       /* user cancelled */
     }

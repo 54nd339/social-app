@@ -50,17 +50,21 @@ export const postHashtags = pgTable(
   (table) => [uniqueIndex('post_hashtags_post_hashtag_idx').on(table.postId, table.hashtagId)],
 );
 
-export const memories = pgTable('memories', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id),
-  postId: uuid('post_id')
-    .notNull()
-    .references(() => posts.id),
-  originalDate: timestamp('original_date').notNull(),
-  surfacedAt: timestamp('surfaced_at'),
-});
+export const memories = pgTable(
+  'memories',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    postId: uuid('post_id')
+      .notNull()
+      .references(() => posts.id),
+    originalDate: timestamp('original_date').notNull(),
+    surfacedAt: timestamp('surfaced_at'),
+  },
+  (table) => [uniqueIndex('memories_user_post_idx').on(table.userId, table.postId)],
+);
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   recipient: one(users, {

@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { LazyCommandPalette } from '@/components/shared/lazy-command-palette';
 import { MobileNav } from '@/components/shared/mobile-nav';
 import { Navbar } from '@/components/shared/navbar';
+import { PushProvider } from '@/components/shared/push-provider';
 import { Sidebar } from '@/components/shared/sidebar';
 import { WellbeingTracker } from '@/components/shared/wellbeing-tracker';
 import { getUserByClerkId } from '@/lib/db/queries/user.queries';
@@ -26,6 +27,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       </div>
 
       <LazyCommandPalette />
+      <PushProvider />
       <WellbeingTracker
         dailyLimitMinutes={user?.dailyLimitMinutes ?? null}
         breakReminderMinutes={user?.breakReminderMinutes ?? null}

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
 
+import { AccountSwitcher } from '@/components/shared/account-switcher';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -158,30 +159,35 @@ export function Sidebar() {
 
         <Separator className="my-2" />
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link
-              href={`/${user?.username ?? ''}`}
-              className="hover:bg-accent flex items-center gap-3 rounded-lg px-3 py-2 transition-colors"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.imageUrl} alt={user?.username ?? 'Profile'} />
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="hidden flex-col lg:flex">
-                <span className="text-sidebar-foreground text-sm font-medium">
-                  {user?.fullName ?? 'Profile'}
-                </span>
-                <span className="text-muted-foreground text-xs">@{user?.username ?? '...'}</span>
-              </div>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="lg:hidden">
-            Profile
-          </TooltipContent>
-        </Tooltip>
+        <div className="flex items-center gap-2 px-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={`/${user?.username ?? ''}`}
+                className="hover:bg-accent flex flex-1 items-center gap-3 rounded-lg px-2 py-2 transition-colors"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.imageUrl} alt={user?.username ?? 'Profile'} />
+                  <AvatarFallback>
+                    <User className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden flex-col lg:flex">
+                  <span className="text-sidebar-foreground text-sm font-medium">
+                    {user?.fullName ?? 'Profile'}
+                  </span>
+                  <span className="text-muted-foreground text-xs">@{user?.username ?? '...'}</span>
+                </div>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="lg:hidden">
+              Profile
+            </TooltipContent>
+          </Tooltip>
+          <div className="hidden lg:block">
+            <AccountSwitcher />
+          </div>
+        </div>
       </div>
     </aside>
   );

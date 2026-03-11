@@ -2,22 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { and, eq, sql } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
 
+import { getAuthenticatedUser } from '@/lib/auth';
 import { MAX_PINNED_POSTS } from '@/lib/constants';
 import { db } from '@/lib/db';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 import { pinnedPosts, restricts, storyHighlights, users } from '@/lib/db/schema';
-
-async function getAuthenticatedUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
-
-  return user;
-}
 
 export async function pinPost(postId: string) {
   const user = await getAuthenticatedUser();
@@ -96,6 +85,15 @@ export async function unrestrictUser(targetUserId: string) {
     .delete(restricts)
     .where(and(eq(restricts.restricterId, user.id), eq(restricts.restrictedId, targetUserId)));
 
+  return { success: true };
+}
+
+export async function recordProfileView(viewedUserId: string) {
+  const user = await getAuthenticatedUser();
+  if (user.id === viewedUserId) return { skipped: true };
+
+  const { recordProfileView: record } = await import('@/lib/db/queries/profile-power.queries');
+  await record(user.id, viewedUserId);
   return { success: true };
 }
 

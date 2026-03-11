@@ -2,12 +2,14 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Bookmark } from 'lucide-react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { ArrowLeft, Bookmark, X } from 'lucide-react';
+import { toast } from 'sonner';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { removeFromCollection } from '@/lib/actions/collection.actions';
 import type { CollectionPost } from '@/lib/db/queries/collection.queries';
 import { formatRelativeTime, truncate } from '@/lib/utils';
 
@@ -36,7 +38,18 @@ interface CollectionPostListProps {
 }
 
 export function CollectionPostList({ collectionId }: CollectionPostListProps) {
+  const queryClient = useQueryClient();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const { mutate: handleRemove } = useMutation({
+    mutationFn: (postId: string) => removeFromCollection(collectionId, postId),
+    onSuccess: () => {
+      toast.success('Removed from collection');
+      queryClient.invalidateQueries({ queryKey: ['collection-posts', collectionId] });
+      queryClient.invalidateQueries({ queryKey: ['collections'] });
+    },
+    onError: () => toast.error('Failed to remove'),
+  });
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useInfiniteQuery({
     queryKey: ['collection-posts', collectionId],
@@ -98,11 +111,11 @@ export function CollectionPostList({ collectionId }: CollectionPostListProps) {
 
       <div>
         {allPosts.map((post) => (
-          <Link
+          <div
             key={post.id}
-            href={`/post/${post.id}`}
-            className="hover:bg-accent/50 flex gap-3 border-b px-4 py-3 transition-colors"
+            className="hover:bg-accent/50 group relative flex gap-3 border-b px-4 py-3 transition-colors"
           >
+            <Link href={`/post/${post.id}`} className="absolute inset-0 z-0" />
             <Avatar className="size-9">
               <AvatarImage src={post.author.avatarUrl ?? undefined} />
               <AvatarFallback>{post.author.username.charAt(0).toUpperCase()}</AvatarFallback>
@@ -118,7 +131,15 @@ export function CollectionPostList({ collectionId }: CollectionPostListProps) {
               </div>
               <p className="text-muted-foreground text-sm">{truncate(post.content, 120)}</p>
             </div>
-          </Link>
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              className="relative z-10 shrink-0 opacity-0 group-hover:opacity-100"
+              onClick={() => handleRemove(post.id)}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
         ))}
       </div>
 

@@ -5,6 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 export const metadata: Metadata = { title: 'Settings' };
 
 import {
+  DataExport,
   PrivacySettings,
   ProfileSettings,
   ThemeSettings,
@@ -61,6 +62,10 @@ export default async function SettingsPage() {
             quietHoursEnd: user.quietHoursEnd,
           }}
         />
+
+        <Separator />
+
+        <DataExport />
       </div>
     </div>
   );

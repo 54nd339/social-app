@@ -7,8 +7,11 @@ import {
   ChevronDown,
   Edit3,
   Eye,
+  Flag,
+  FolderPlus,
   MessageCircle,
   MoreHorizontal,
+  Pin,
   Share2,
   Trash2,
 } from 'lucide-react';
@@ -16,6 +19,9 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { EditIndicator } from '@/components/shared/edit-indicator';
+import { ReportDialog } from '@/components/shared/report-dialog';
+import { ShareSheet } from '@/components/shared/share-sheet';
 import { ZenMetric } from '@/components/shared/zen-metric';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -27,14 +33,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { bookmarkPost, deletePost } from '@/lib/actions/post.actions';
+import { bookmarkPost, deletePost, sharePost } from '@/lib/actions/post.actions';
+import { pinPost, unpinPost } from '@/lib/actions/profile-power.actions';
 import type { FeedPost } from '@/lib/db/queries/post.queries';
 import { cn, formatRelativeTime } from '@/lib/utils';
 
+import { EditPostDialog } from './edit-post-dialog';
 import { LinkPreview } from './link-preview';
 import { MediaGallery } from './media-gallery';
 import { PollCard } from './poll-card';
 import { ReactionBar } from './reaction-bar';
+import { SaveToCollectionSheet } from './save-to-collection-sheet';
 
 interface PostCardProps {
   post: FeedPost;
@@ -45,6 +54,8 @@ export function PostCard({ post }: PostCardProps) {
   const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCW, setShowCW] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [collectionOpen, setCollectionOpen] = useState(false);
 
   const isAuthor = clerkUser?.id === post.author.id;
   const hasCW = !!post.contentWarning;
@@ -98,6 +109,19 @@ export function PostCard({ post }: PostCardProps) {
     },
   });
 
+  const { mutate: handlePin } = useMutation({
+    mutationFn: () => (post.isPinned ? unpinPost(post.id) : pinPost(post.id)),
+    onSuccess: () => {
+      toast.success(post.isPinned ? 'Unpinned from profile' : 'Pinned to profile');
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const { mutate: trackShare } = useMutation({
+    mutationFn: () => sharePost(post.id),
+  });
+
   return (
     <article className="bg-card hover:bg-card/80 border-b transition-colors">
       <div className="p-4">
@@ -133,7 +157,9 @@ export function PostCard({ post }: PostCardProps) {
                 >
                   {formatRelativeTime(post.createdAt)}
                 </time>
-                {post.isEdited && <span className="text-muted-foreground text-xs">(edited)</span>}
+                {post.isEdited && post.editedAt && (
+                  <EditIndicator postId={post.id} editedAt={post.editedAt} />
+                )}
               </div>
 
               <DropdownMenu>
@@ -147,6 +173,10 @@ export function PostCard({ post }: PostCardProps) {
                     <Bookmark className="size-4" />
                     Save
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setCollectionOpen(true)}>
+                    <FolderPlus className="size-4" />
+                    Save to collection
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
@@ -159,14 +189,32 @@ export function PostCard({ post }: PostCardProps) {
                   {isAuthor && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setEditOpen(true)}>
                         <Edit3 className="size-4" />
                         Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePin()}>
+                        <Pin className="size-4" />
+                        {post.isPinned ? 'Unpin from profile' : 'Pin to profile'}
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive" onClick={() => handleDelete()}>
                         <Trash2 className="size-4" />
                         Delete
                       </DropdownMenuItem>
+                    </>
+                  )}
+                  {!isAuthor && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <ReportDialog entityId={post.id} entityType="post">
+                        <DropdownMenuItem
+                          onSelect={(e) => e.preventDefault()}
+                          className="text-destructive"
+                        >
+                          <Flag className="size-4" />
+                          Report
+                        </DropdownMenuItem>
+                      </ReportDialog>
                     </>
                   )}
                 </DropdownMenuContent>
@@ -259,10 +307,20 @@ export function PostCard({ post }: PostCardProps) {
                 </Link>
               </Button>
 
-              <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 text-xs">
-                <Share2 className="size-4" />
-                <ZenMetric value={post.shareCount} />
-              </Button>
+              <ShareSheet
+                url={
+                  typeof window !== 'undefined'
+                    ? `${window.location.origin}/post/${post.id}`
+                    : `/post/${post.id}`
+                }
+                title={`Post by @${post.author.username}`}
+                onShared={() => trackShare()}
+              >
+                <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 text-xs">
+                  <Share2 className="size-4" />
+                  <ZenMetric value={post.shareCount} />
+                </Button>
+              </ShareSheet>
 
               <div className="flex-1" />
 
@@ -278,6 +336,18 @@ export function PostCard({ post }: PostCardProps) {
           </div>
         </div>
       </div>
+
+      <EditPostDialog
+        postId={post.id}
+        initialContent={post.content}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+      <SaveToCollectionSheet
+        postId={post.id}
+        open={collectionOpen}
+        onOpenChange={setCollectionOpen}
+      />
     </article>
   );
 }

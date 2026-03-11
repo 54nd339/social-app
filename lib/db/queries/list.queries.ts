@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/lib/db';
 import { userListMembers, userLists, users } from '@/lib/db/schema';
@@ -49,6 +49,19 @@ export async function getUserLists(userId: string): Promise<UserListWithCount[]>
     memberCount: countMap.get(list.id) ?? 0,
     createdAt: list.createdAt,
   }));
+}
+
+export async function getListIfOwned(
+  listId: string,
+  ownerId: string,
+): Promise<{ id: string } | null> {
+  const [row] = await db
+    .select({ id: userLists.id })
+    .from(userLists)
+    .where(and(eq(userLists.id, listId), eq(userLists.ownerId, ownerId)))
+    .limit(1);
+
+  return row ?? null;
 }
 
 export async function getListMembers(listId: string): Promise<ListMember[]> {

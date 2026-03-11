@@ -2,21 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { and, eq } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
 
+import { createNotification } from '@/lib/actions/notification.helper';
+import { getAuthenticatedUser } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 import { follows, users } from '@/lib/db/schema';
-
-async function getAuthenticatedUser() {
-  const { userId: clerkId } = await auth();
-  if (!clerkId) throw new Error('Unauthorized');
-
-  const user = await getUserByClerkId(clerkId);
-  if (!user) throw new Error('User not found');
-
-  return user;
-}
 
 export async function followUser(targetUserId: string) {
   const user = await getAuthenticatedUser();
@@ -42,10 +32,21 @@ export async function followUser(targetUserId: string) {
 
   const status = target.isPrivate ? 'pending' : 'accepted';
 
-  await db.insert(follows).values({
-    followerId: user.id,
-    followingId: targetUserId,
-    status,
+  const [follow] = await db
+    .insert(follows)
+    .values({
+      followerId: user.id,
+      followingId: targetUserId,
+      status,
+    })
+    .returning({ id: follows.id });
+
+  await createNotification({
+    recipientId: targetUserId,
+    actorId: user.id,
+    type: status === 'pending' ? 'follow_request' : 'follow',
+    entityId: follow!.id,
+    entityType: 'follow',
   });
 
   revalidatePath(`/${target.username}`);

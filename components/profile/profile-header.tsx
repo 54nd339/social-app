@@ -1,13 +1,32 @@
 'use client';
 
 import Image from 'next/image';
-import { Calendar, Link as LinkIcon, Lock, MapPin, Share2 } from 'lucide-react';
+import {
+  Calendar,
+  Flag,
+  Link as LinkIcon,
+  Lock,
+  MapPin,
+  MoreHorizontal,
+  Share2,
+  ShieldAlert,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { useMutation } from '@tanstack/react-query';
 
+import { ReportDialog } from '@/components/shared/report-dialog';
 import { ZenMetric } from '@/components/shared/zen-metric';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { restrictUser, unrestrictUser } from '@/lib/actions/profile-power.actions';
 import type { ProfileData } from '@/lib/db/queries/profile.queries';
 
 import { FollowButton } from './follow-button';
@@ -18,6 +37,18 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ profile }: ProfileHeaderProps) {
   const isSelf = profile.followStatus === 'self';
+
+  const { mutate: handleRestrict } = useMutation({
+    mutationFn: () => restrictUser(profile.id),
+    onSuccess: () => toast.success(`Restricted @${profile.username}`),
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const { mutate: handleUnrestrict } = useMutation({
+    mutationFn: () => unrestrictUser(profile.id),
+    onSuccess: () => toast.success(`Unrestricted @${profile.username}`),
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   function handleShare() {
     navigator.clipboard.writeText(`${window.location.origin}/${profile.username}`);
@@ -57,7 +88,36 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                 Edit profile
               </Button>
             ) : (
-              <FollowButton userId={profile.id} initialStatus={profile.followStatus} />
+              <>
+                <FollowButton userId={profile.id} initialStatus={profile.followStatus} />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon-sm">
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleRestrict()}>
+                      <ShieldAlert className="size-4" />
+                      Restrict @{profile.username}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleUnrestrict()}>
+                      <ShieldAlert className="size-4" />
+                      Unrestrict @{profile.username}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <ReportDialog entityId={profile.id} entityType="user">
+                      <DropdownMenuItem
+                        onSelect={(e) => e.preventDefault()}
+                        className="text-destructive"
+                      >
+                        <Flag className="size-4" />
+                        Report @{profile.username}
+                      </DropdownMenuItem>
+                    </ReportDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             )}
           </div>
         </div>

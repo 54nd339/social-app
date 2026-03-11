@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Search } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
@@ -15,13 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { createConversation } from '@/lib/actions/chat.actions';
-
-interface SearchUser {
-  id: string;
-  username: string;
-  displayName: string | null;
-  avatarUrl: string | null;
-}
+import { useUserSearch } from '@/hooks/use-user-search';
 
 interface NewConversationDialogProps {
   children: React.ReactNode;
@@ -31,9 +25,7 @@ export function NewConversationDialog({ children }: NewConversationDialogProps) 
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchUser[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [_isPending, startTransition] = useTransition();
+  const { data: results = [], isLoading: isSearching } = useUserSearch(query, open);
 
   const { mutate: startConversation, isPending } = useMutation({
     mutationFn: (otherUserId: string) => createConversation(otherUserId),
@@ -42,25 +34,6 @@ export function NewConversationDialog({ children }: NewConversationDialogProps) 
       router.push(`/messages/${data.conversationId}`);
     },
   });
-
-  async function handleSearch(value: string) {
-    setQuery(value);
-    if (value.trim().length < 2) {
-      setResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(value)}&type=users`);
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data.users ?? []);
-      }
-    } finally {
-      setIsSearching(false);
-    }
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -74,9 +47,7 @@ export function NewConversationDialog({ children }: NewConversationDialogProps) 
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             value={query}
-            onChange={(e) => {
-              startTransition(() => handleSearch(e.target.value));
-            }}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Search people..."
             className="pl-9"
           />
