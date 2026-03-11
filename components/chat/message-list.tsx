@@ -161,6 +161,16 @@ export function MessageList({ conversationId, currentUserId }: MessageListProps)
                       unoptimized
                     />
                   )}
+                  {msg.type === 'gif' && msg.mediaUrl && (
+                    <Image
+                      src={msg.mediaUrl}
+                      alt="GIF"
+                      width={250}
+                      height={200}
+                      className="max-w-full rounded-lg"
+                      unoptimized
+                    />
+                  )}
                   {msg.type === 'voice' && msg.mediaUrl && (
                     <audio controls src={msg.mediaUrl} className="max-w-full" />
                   )}

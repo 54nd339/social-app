@@ -1,9 +1,16 @@
+import { auth } from '@clerk/nextjs/server';
+
 import { CommandPalette } from '@/components/shared/command-palette';
 import { MobileNav } from '@/components/shared/mobile-nav';
 import { Navbar } from '@/components/shared/navbar';
 import { Sidebar } from '@/components/shared/sidebar';
+import { WellbeingTracker } from '@/components/shared/wellbeing-tracker';
+import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  const { userId: clerkId } = await auth();
+  const user = clerkId ? await getUserByClerkId(clerkId) : null;
+
   return (
     <div className="flex min-h-screen">
       <div className="hidden md:block">
@@ -17,6 +24,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       <CommandPalette />
+      <WellbeingTracker
+        dailyLimitMinutes={user?.dailyLimitMinutes ?? null}
+        breakReminderMinutes={user?.breakReminderMinutes ?? null}
+      />
     </div>
   );
 }

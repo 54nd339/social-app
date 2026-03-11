@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Send } from 'lucide-react';
+import { ImagePlay, Loader2, Send } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { sendMessage } from '@/lib/actions/chat.actions';
+
+import { GifPicker } from './gif-picker';
 
 interface MessageInputProps {
   conversationId: string;
@@ -17,11 +19,12 @@ export function MessageInput({ conversationId }: MessageInputProps) {
   const [content, setContent] = useState('');
 
   const { mutate: send, isPending } = useMutation({
-    mutationFn: () =>
+    mutationFn: (input?: { type?: string; mediaUrl?: string }) =>
       sendMessage({
         conversationId,
-        content,
-        type: 'text',
+        content: input?.type === 'gif' ? undefined : content,
+        type: input?.type ?? 'text',
+        mediaUrl: input?.mediaUrl,
       }),
     onSuccess: () => {
       setContent('');
@@ -30,14 +33,23 @@ export function MessageInput({ conversationId }: MessageInputProps) {
     },
   });
 
+  function handleGifSelect(url: string) {
+    send({ type: 'gif', mediaUrl: url });
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!content.trim() || isPending) return;
-    send();
+    send({});
   }
 
   return (
     <form onSubmit={handleSubmit} className="bg-background flex items-center gap-2 border-t p-3">
+      <GifPicker onSelect={handleGifSelect}>
+        <Button type="button" variant="ghost" size="icon-sm">
+          <ImagePlay className="size-4" />
+        </Button>
+      </GifPicker>
       <Input
         value={content}
         onChange={(e) => setContent(e.target.value)}

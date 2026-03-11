@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { ZenMetric } from '@/components/shared/zen-metric';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -224,15 +225,13 @@ export function PostCard({ post }: PostCardProps) {
               >
                 <Link href={`/post/${post.id}`}>
                   <MessageCircle className="size-4" />
-                  {post.commentCount > 0 && (
-                    <span className="tabular-nums">{post.commentCount}</span>
-                  )}
+                  <ZenMetric value={post.commentCount} />
                 </Link>
               </Button>
 
               <Button variant="ghost" size="sm" className="text-muted-foreground gap-1.5 text-xs">
                 <Share2 className="size-4" />
-                {post.shareCount > 0 && <span className="tabular-nums">{post.shareCount}</span>}
+                <ZenMetric value={post.shareCount} />
               </Button>
 
               <div className="flex-1" />

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { ZenMetric } from '@/components/shared/zen-metric';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toggleReaction } from '@/lib/actions/post.actions';
@@ -95,7 +96,7 @@ export function ReactionBar({
             ) : (
               <span className="text-sm">👍</span>
             )}
-            {totalReactions > 0 && <span className="tabular-nums">{totalReactions}</span>}
+            <ZenMetric value={totalReactions} />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-1" align="start" side="top">

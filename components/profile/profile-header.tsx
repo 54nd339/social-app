@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Calendar, Link as LinkIcon, Lock, MapPin, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { ZenMetric } from '@/components/shared/zen-metric';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -116,17 +117,22 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
 
           <div className="flex items-center gap-4 text-sm">
             <button className="hover:underline">
-              <span className="font-semibold">{profile.followingCount}</span>{' '}
+              <span className="font-semibold">
+                <ZenMetric value={profile.followingCount} fallback="—" />
+              </span>{' '}
               <span className="text-muted-foreground">Following</span>
             </button>
             <button className="hover:underline">
-              <span className="font-semibold">{profile.followerCount}</span>{' '}
-              <span className="text-muted-foreground">
-                {profile.followerCount === 1 ? 'Follower' : 'Followers'}
-              </span>
+              <span className="font-semibold">
+                <ZenMetric value={profile.followerCount} fallback="—" />
+              </span>{' '}
+              <span className="text-muted-foreground">Followers</span>
             </button>
             <span className="text-muted-foreground">
-              <span className="text-foreground font-semibold">{profile.postCount}</span> Posts
+              <span className="text-foreground font-semibold">
+                <ZenMetric value={profile.postCount} fallback="—" />
+              </span>{' '}
+              Posts
             </span>
           </div>
         </div>
