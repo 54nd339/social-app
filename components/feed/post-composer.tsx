@@ -15,8 +15,9 @@ import {
   X,
 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { CollabInvite } from '@/components/feed/collab-invite';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +27,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { createPost } from '@/lib/actions/post.actions';
 import {
@@ -36,6 +44,18 @@ import {
 } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { PostVisibility } from '@/types';
+
+interface CircleOption {
+  id: string;
+  name: string;
+  emoji: string | null;
+}
+
+async function fetchCircles(): Promise<CircleOption[]> {
+  const res = await fetch('/api/circles');
+  if (!res.ok) return [];
+  return res.json();
+}
 
 interface PostComposerProps {
   className?: string;
@@ -67,10 +87,23 @@ export function PostComposer({ className }: PostComposerProps) {
 
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState<PostVisibility>('public');
+  const [circleId, setCircleId] = useState<string | null>(null);
   const [images, setImages] = useState<ImageData[]>([]);
   const [poll, setPoll] = useState<PollData | null>(null);
   const [contentWarning, setContentWarning] = useState('');
   const [showContentWarning, setShowContentWarning] = useState(false);
+  const [collabUser, setCollabUser] = useState<{
+    id: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+  } | null>(null);
+
+  const { data: circles } = useQuery({
+    queryKey: ['circles'],
+    queryFn: fetchCircles,
+    enabled: visibility === 'circle',
+  });
 
   const charCount = content.length;
   const isOverLimit = charCount > MAX_POST_LENGTH;
@@ -84,6 +117,7 @@ export function PostComposer({ className }: PostComposerProps) {
       setPoll(null);
       setContentWarning('');
       setShowContentWarning(false);
+      setCollabUser(null);
       queryClient.invalidateQueries({ queryKey: ['feed'] });
     },
   });
@@ -95,6 +129,8 @@ export function PostComposer({ className }: PostComposerProps) {
       submitPost({
         content,
         visibility,
+        circleId: visibility === 'circle' ? circleId : undefined,
+        collabUserId: collabUser?.id ?? undefined,
         images: images.map((img) => ({ url: img.url })),
         poll: poll
           ? {
@@ -291,6 +327,8 @@ export function PostComposer({ className }: PostComposerProps) {
                 <AlertTriangle className="size-4" />
               </Button>
 
+              <CollabInvite selectedUser={collabUser} onSelect={setCollabUser} />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
@@ -311,6 +349,26 @@ export function PostComposer({ className }: PostComposerProps) {
                   })}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {visibility === 'circle' && (
+                <Select value={circleId ?? ''} onValueChange={(v) => setCircleId(v || null)}>
+                  <SelectTrigger className="h-7 w-auto gap-1 text-xs">
+                    <SelectValue placeholder="Pick circle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {circles?.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.emoji ?? '🔵'} {c.name}
+                      </SelectItem>
+                    ))}
+                    {(!circles || circles.length === 0) && (
+                      <SelectItem value="" disabled>
+                        No circles yet
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="flex items-center gap-3">

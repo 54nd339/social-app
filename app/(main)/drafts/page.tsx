@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { DraftList } from './draft-list';
+
+export const metadata: Metadata = {
+  title: 'Drafts & Scheduled',
+  description: 'Manage your draft and scheduled posts.',
+};
 
 export default function DraftsPage() {
   return (

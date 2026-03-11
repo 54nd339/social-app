@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { ActivityList } from './activity-list';
+
+export const metadata: Metadata = {
+  title: 'Activity',
+  description: 'Your recent activity on Haven.',
+};
 
 export default function ActivityPage() {
   return (

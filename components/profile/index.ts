@@ -1,4 +1,9 @@
+export { BadgeList } from './badge-list';
+export { CustomStatus } from './custom-status';
 export { FollowButton } from './follow-button';
+export { PinnedPosts } from './pinned-posts';
 export { ProfileHeader } from './profile-header';
 export { ProfilePosts } from './profile-posts';
 export { ProfileTabs } from './profile-tabs';
+export { ProfileViewers } from './profile-viewers';
+export { StoryHighlights } from './story-highlights';

@@ -1,5 +1,8 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
+
+export const metadata: Metadata = { title: 'Settings' };
 
 import {
   PrivacySettings,

@@ -1,36 +1,62 @@
 import * as cheerio from 'cheerio';
 
-interface OGData {
+export interface OgData {
+  url: string;
   title: string | null;
   description: string | null;
   imageUrl: string | null;
   siteName: string | null;
-  url: string;
 }
 
-export async function scrapeOpenGraph(url: string): Promise<OGData> {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'HavenBot/1.0 (+https://haven.app)' },
-    signal: AbortSignal.timeout(5000),
-  });
+export async function scrapeOgData(url: string): Promise<OgData | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
-  if (!response.ok) {
-    return { title: null, description: null, imageUrl: null, siteName: null, url };
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'HavenBot/1.0 (+https://haven.social)',
+        Accept: 'text/html',
+      },
+    });
+
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get('content-type') ?? '';
+    if (!contentType.includes('text/html')) return null;
+
+    const html = await res.text();
+    const $ = cheerio.load(html);
+
+    const getMeta = (property: string): string | null => {
+      return (
+        $(`meta[property="${property}"]`).attr('content') ??
+        $(`meta[name="${property}"]`).attr('content') ??
+        null
+      );
+    };
+
+    const title = getMeta('og:title') ?? $('title').text() ?? null;
+    const description = getMeta('og:description') ?? getMeta('description');
+    let imageUrl = getMeta('og:image');
+    const siteName = getMeta('og:site_name');
+
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      const base = new URL(url);
+      imageUrl = new URL(imageUrl, base.origin).toString();
+    }
+
+    return {
+      url,
+      title: title?.slice(0, 200) ?? null,
+      description: description?.slice(0, 500) ?? null,
+      imageUrl,
+      siteName: siteName?.slice(0, 100) ?? null,
+    };
+  } catch {
+    return null;
   }
-
-  const html = await response.text();
-  const $ = cheerio.load(html);
-
-  const getMeta = (property: string): string | null =>
-    $(`meta[property="${property}"]`).attr('content') ||
-    $(`meta[name="${property}"]`).attr('content') ||
-    null;
-
-  return {
-    title: getMeta('og:title') || $('title').text() || null,
-    description: getMeta('og:description') || getMeta('description'),
-    imageUrl: getMeta('og:image'),
-    siteName: getMeta('og:site_name'),
-    url,
-  };
 }

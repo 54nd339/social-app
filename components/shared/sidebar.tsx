@@ -6,10 +6,12 @@ import {
   Activity,
   Bell,
   Bookmark,
+  CircleDashed,
   Compass,
   Eye,
   EyeOff,
   Flame,
+  FolderHeart,
   Home,
   MessageCircle,
   PenSquare,
@@ -35,6 +37,8 @@ const NAV_ITEMS = [
 ] as const;
 
 const SECONDARY_ITEMS = [
+  { href: '/circles', icon: CircleDashed, label: 'Circles' },
+  { href: '/collections', icon: FolderHeart, label: 'Collections' },
   { href: '/drafts', icon: PenSquare, label: 'Drafts' },
   { href: '/vault', icon: Bookmark, label: 'Vault' },
   { href: '/settings', icon: Settings, label: 'Settings' },

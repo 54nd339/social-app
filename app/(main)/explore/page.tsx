@@ -1,8 +1,14 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 
 import { SearchBar, SearchResults, SuggestedUsers, TrendingPosts } from '@/components/explore';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+
+export const metadata: Metadata = {
+  title: 'Explore',
+  description: 'Discover trending posts, find new people, and explore topics on Haven.',
+};
 
 export default function ExplorePage() {
   return (

@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 
 import { getUserByClerkId } from '@/lib/db/queries/user.queries';
 
 import { WellbeingDashboard } from './wellbeing-dashboard';
+
+export const metadata: Metadata = {
+  title: 'Digital Wellbeing',
+  description: 'Monitor your screen time and manage your digital habits.',
+};
 
 export default async function WellbeingPage() {
   const { userId: clerkId } = await auth();

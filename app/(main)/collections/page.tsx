@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { CollectionGrid } from '@/components/collections';
+
+export const metadata: Metadata = {
+  title: 'Collections',
+  description: 'Your saved posts, organized.',
+};
 
 export default function CollectionsPage() {
   return (

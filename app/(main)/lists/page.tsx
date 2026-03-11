@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { ListGrid } from '@/components/lists';
+
+export const metadata: Metadata = {
+  title: 'Lists',
+  description: 'Custom user groups to filter your feed.',
+};
 
 export default function ListsPage() {
   return (

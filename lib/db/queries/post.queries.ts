@@ -3,7 +3,9 @@ import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm';
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants';
 import { db } from '@/lib/db';
 import {
+  circleMembers,
   comments,
+  follows,
   pollOptions,
   polls,
   pollVotes,
@@ -73,11 +75,26 @@ export async function getFeedPosts(
   cursor?: string,
   limit: number = DEFAULT_PAGE_SIZE,
 ): Promise<{ posts: FeedPost[]; nextCursor: string | null }> {
+  const userCircleIds = db
+    .select({ circleId: circleMembers.circleId })
+    .from(circleMembers)
+    .where(eq(circleMembers.userId, userId));
+
+  const followedUserIds = db
+    .select({ followingId: follows.followingId })
+    .from(follows)
+    .where(and(eq(follows.followerId, userId), eq(follows.status, 'accepted')));
+
   const conditions = [
     eq(posts.isDraft, false),
     isNull(posts.scheduledAt),
     isNull(posts.timeCapsuleAt),
-    or(eq(posts.visibility, 'public'), eq(posts.authorId, userId)),
+    or(
+      eq(posts.visibility, 'public'),
+      eq(posts.authorId, userId),
+      and(eq(posts.visibility, 'followers'), sql`${posts.authorId} IN (${followedUserIds})`),
+      and(eq(posts.visibility, 'circle'), sql`${posts.circleId} IN (${userCircleIds})`),
+    ),
   ];
 
   if (cursor) {

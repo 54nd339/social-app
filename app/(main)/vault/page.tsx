@@ -1,4 +1,11 @@
+import type { Metadata } from 'next';
+
 import { VaultView } from './vault-view';
+
+export const metadata: Metadata = {
+  title: 'Vault',
+  description: 'Your encrypted personal space on Haven.',
+};
 
 export default function VaultPage() {
   return (

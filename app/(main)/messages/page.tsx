@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { PenSquare } from 'lucide-react';
 
 import { ConversationList, NewConversationDialog } from '@/components/chat';
 import { Button } from '@/components/ui/button';
+
+export const metadata: Metadata = { title: 'Messages' };
 
 export default function MessagesPage() {
   return (
