@@ -14,6 +14,8 @@ export const profileSettingsSchema = z.object({
 export const privacySettingsSchema = z.object({
   isPrivate: z.boolean(),
   profileViewsEnabled: z.boolean(),
+  showReplies: z.boolean(),
+  showReactions: z.boolean(),
 });
 
 export const wellbeingSettingsSchema = z.object({

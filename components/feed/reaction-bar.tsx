@@ -1,22 +1,25 @@
 'use client';
 
 import { useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { Flame, Handshake, Heart, Laugh, Lightbulb, Palette, ThumbsUp } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { ZenMetric } from '@/components/shared/zen-metric';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toggleReaction } from '@/lib/actions/post.actions';
 import { REACTION_TYPES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
-const REACTION_EMOJI: Record<string, string> = {
-  insightful: '💡',
-  creative: '🎨',
-  supportive: '🤝',
-  funny: '😂',
-  heartwarming: '💖',
-  fire: '🔥',
+const REACTION_ICONS: Record<string, LucideIcon> = {
+  insightful: Lightbulb,
+  creative: Palette,
+  supportive: Handshake,
+  funny: Laugh,
+  heartwarming: Heart,
+  fire: Flame,
 };
 
 interface ReactionBarProps {
@@ -91,41 +94,50 @@ export function ReactionBar({
             size="sm"
             className={cn('gap-1.5 text-xs', optimisticReaction && 'text-primary')}
           >
-            {optimisticReaction ? (
-              <span className="text-sm">{REACTION_EMOJI[optimisticReaction]}</span>
-            ) : (
-              <span className="text-sm">👍</span>
-            )}
+            {(() => {
+              const Icon = optimisticReaction
+                ? (REACTION_ICONS[optimisticReaction] ?? ThumbsUp)
+                : ThumbsUp;
+              return <Icon className="size-4" />;
+            })()}
             <ZenMetric value={totalReactions} />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-1" align="start" side="top">
           <div className="flex gap-0.5">
-            {REACTION_TYPES.map((type) => (
-              <Button
-                key={type}
-                variant="ghost"
-                size="icon-sm"
-                className={cn(
-                  'text-lg transition-transform hover:scale-125',
-                  optimisticReaction === type && 'bg-primary/10',
-                )}
-                onClick={() => handleReact(type)}
-              >
-                {REACTION_EMOJI[type]}
-              </Button>
-            ))}
+            {REACTION_TYPES.map((type) => {
+              const Icon = REACTION_ICONS[type] ?? ThumbsUp;
+              return (
+                <Tooltip key={type}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className={cn(
+                        'transition-transform hover:scale-125',
+                        optimisticReaction === type && 'bg-primary/10 text-primary',
+                      )}
+                      onClick={() => handleReact(type)}
+                    >
+                      <Icon className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs capitalize">
+                    {type}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
         </PopoverContent>
       </Popover>
 
       {topReactions.length > 0 && (
-        <div className="flex -space-x-0.5">
-          {topReactions.map(([type]) => (
-            <span key={type} className="text-xs">
-              {REACTION_EMOJI[type]}
-            </span>
-          ))}
+        <div className="flex -space-x-1">
+          {topReactions.map(([type]) => {
+            const Icon = REACTION_ICONS[type] ?? ThumbsUp;
+            return <Icon key={type} className="text-muted-foreground size-3.5" />;
+          })}
         </div>
       )}
     </div>

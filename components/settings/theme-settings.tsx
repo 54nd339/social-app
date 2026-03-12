@@ -1,5 +1,6 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
 import { useTheme } from 'next-themes';
 import { Monitor, Moon, Sun } from 'lucide-react';
 
@@ -13,8 +14,15 @@ const THEMES = [
   { value: 'system', label: 'System', icon: Monitor },
 ] as const;
 
+const emptySubscribe = () => () => {};
+
 export function ThemeSettings() {
   const { theme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   return (
     <div className="space-y-6">
@@ -28,23 +36,24 @@ export function ThemeSettings() {
       <div className="space-y-2">
         <Label>Theme</Label>
         <div className="grid grid-cols-3 gap-3">
-          {THEMES.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              onClick={() => setTheme(value)}
-              className={cn(
-                'flex flex-col items-center gap-2 rounded-lg border p-4 transition-all',
-                theme === value
-                  ? 'border-primary bg-primary/5 ring-primary ring-1'
-                  : 'hover:bg-accent',
-              )}
-            >
-              <Icon
-                className={cn('size-6', theme === value ? 'text-primary' : 'text-muted-foreground')}
-              />
-              <span className="text-xs font-medium">{label}</span>
-            </button>
-          ))}
+          {THEMES.map(({ value, label, icon: Icon }) => {
+            const isActive = mounted && theme === value;
+            return (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                className={cn(
+                  'flex flex-col items-center gap-2 rounded-lg border p-4 transition-all',
+                  isActive ? 'border-primary bg-primary/5 ring-primary ring-1' : 'hover:bg-accent',
+                )}
+              >
+                <Icon
+                  className={cn('size-6', isActive ? 'text-primary' : 'text-muted-foreground')}
+                />
+                <span className="text-xs font-medium">{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

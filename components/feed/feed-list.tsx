@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Flame, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
+import { HavenLogo } from '@/components/shared/haven-logo';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { FeedPost } from '@/lib/db/queries/post.queries';
 
@@ -117,7 +118,7 @@ export function FeedList() {
     return (
       <div className="flex flex-col items-center gap-4 py-20 text-center">
         <div className="bg-primary/10 flex size-16 items-center justify-center rounded-2xl">
-          <Flame className="text-primary size-8" />
+          <HavenLogo className="text-primary size-8" />
         </div>
         <div className="space-y-1">
           <h3 className="text-lg font-semibold">Your feed is empty</h3>
@@ -148,7 +149,7 @@ export function FeedList() {
 
       {!hasNextPage && allPosts.length > 0 && (
         <div className="flex flex-col items-center gap-1 py-8 text-center">
-          <Flame className="text-primary size-5" />
+          <HavenLogo className="text-primary size-5" />
           <p className="text-muted-foreground text-xs">You&apos;re all caught up</p>
         </div>
       )}

@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { Flame } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
+import { HavenLogo } from '@/components/shared/haven-logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SearchPost } from '@/lib/db/queries/search.queries';
@@ -38,7 +38,7 @@ export function TrendingPosts() {
   if (!trending || trending.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 py-10 text-center">
-        <Flame className="text-muted-foreground/40 size-6" />
+        <HavenLogo className="text-muted-foreground/40 size-6" />
         <p className="text-muted-foreground text-xs">Nothing trending yet</p>
       </div>
     );
@@ -47,7 +47,7 @@ export function TrendingPosts() {
   return (
     <div>
       <div className="flex items-center gap-2 px-1 pb-3">
-        <Flame className="text-primary size-4" />
+        <HavenLogo className="text-primary size-4" />
         <h3 className="text-sm font-semibold">Trending this week</h3>
       </div>
 

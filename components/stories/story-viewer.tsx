@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
-import { MoreHorizontal, Trash2, X } from 'lucide-react';
+import { ImageOff, Loader2, MoreHorizontal, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@clerk/nextjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -40,6 +40,9 @@ export function StoryViewer({ rings, initialUserId, open, onOpenChange }: StoryV
     rings.findIndex((r) => r.userId === initialUserId),
   );
   const [currentStoryIdx, setCurrentStoryIdx] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [prevStoryId, setPrevStoryId] = useState<string | null>(null);
 
   const currentRing = rings[currentUserIdx];
   const isOwnStory = !!clerkUser && currentRing?.clerkId === clerkUser.id;
@@ -66,6 +69,12 @@ export function StoryViewer({ rings, initialUserId, open, onOpenChange }: StoryV
   });
 
   const currentStory = stories?.[currentStoryIdx];
+
+  if (currentStory && currentStory.id !== prevStoryId) {
+    setPrevStoryId(currentStory.id);
+    setImageLoaded(false);
+    setImageError(false);
+  }
 
   useEffect(() => {
     if (currentStory && !currentStory.isViewed) {
@@ -117,17 +126,22 @@ export function StoryViewer({ rings, initialUserId, open, onOpenChange }: StoryV
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[90vh] max-w-md flex-col overflow-hidden border-0 bg-black p-0">
+      <DialogContent
+        showCloseButton={false}
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="flex h-[90vh] max-w-md flex-col overflow-hidden border-0 bg-black p-0"
+      >
         {stories && stories.length > 0 && (
           <div className="absolute top-0 right-0 left-0 z-10 flex gap-0.5 px-2 pt-2">
             {stories.map((_, idx) => (
               <div key={idx} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/30">
                 <div
-                  className={`h-full rounded-full bg-white transition-all ${
+                  className={`h-full rounded-full bg-white ${
                     idx < currentStoryIdx
                       ? 'w-full'
                       : idx === currentStoryIdx
-                        ? 'w-full animate-[progress_5s_linear]'
+                        ? 'animate-[progress_5s_linear_forwards]'
                         : 'w-0'
                   }`}
                 />
@@ -182,8 +196,26 @@ export function StoryViewer({ rings, initialUserId, open, onOpenChange }: StoryV
         </div>
 
         <div className="relative flex flex-1 items-center justify-center">
-          {currentStory && (
-            <Image src={currentStory.mediaUrl} alt="" fill className="object-contain" priority />
+          {currentStory && !imageError && (
+            <Image
+              src={currentStory.mediaUrl}
+              alt=""
+              fill
+              unoptimized
+              className="object-contain"
+              priority
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+          )}
+          {currentStory && !imageLoaded && !imageError && (
+            <Loader2 className="size-8 animate-spin text-white/60" />
+          )}
+          {imageError && (
+            <div className="flex flex-col items-center gap-2 text-white/60">
+              <ImageOff className="size-8" />
+              <p className="text-sm">Failed to load image</p>
+            </div>
           )}
 
           {currentStory?.caption && (

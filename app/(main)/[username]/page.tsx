@@ -32,7 +32,7 @@ interface ProfilePageProps {
 
 export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
   const { username } = await params;
-  const profile = await getProfileByUsername(username, '');
+  const profile = await getProfileByUsername(username, null);
   if (!profile) return { title: 'User not found' };
 
   const title = profile.displayName ?? profile.username;
@@ -103,7 +103,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       <BadgeList badges={badges} />
       <StoryHighlights highlights={highlights} isSelf={isSelf} />
       <Separator />
-      <ProfileTabs>
+      <ProfileTabs
+        username={profile.username}
+        isSelf={isSelf}
+        showReplies={profile.showReplies}
+        showReactions={profile.showReactions}
+      >
         <ProfilePosts username={profile.username} />
       </ProfileTabs>
       {isSelf && (

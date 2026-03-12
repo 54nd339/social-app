@@ -49,6 +49,8 @@ export default async function SettingsPage() {
           initialData={{
             isPrivate: user.isPrivate,
             profileViewsEnabled: user.profileViewsEnabled,
+            showReplies: user.showReplies,
+            showReactions: user.showReactions,
           }}
         />
 

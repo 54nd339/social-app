@@ -3,10 +3,11 @@
 import { useCallback, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import { Check, Flame, Loader2, X } from 'lucide-react';
+import { Check, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { HavenLogo } from '@/components/shared/haven-logo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -192,7 +193,7 @@ export function OnboardingForm({ defaultUsername }: OnboardingFormProps) {
         {isPending ? (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <Flame className="mr-2 h-4 w-4" />
+          <HavenLogo className="mr-2 h-4 w-4" />
         )}
         {isPending ? 'Setting up...' : 'Enter Haven'}
       </Button>

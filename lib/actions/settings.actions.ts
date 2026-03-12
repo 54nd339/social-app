@@ -45,10 +45,32 @@ export async function updatePrivacySettings(input: PrivacySettingsInput) {
     .set({
       isPrivate: validated.isPrivate,
       profileViewsEnabled: validated.profileViewsEnabled,
+      showReplies: validated.showReplies,
+      showReactions: validated.showReactions,
     })
     .where(eq(users.id, user.id));
 
   revalidatePath('/settings');
+  return { success: true };
+}
+
+export async function updateAvatar(url: string) {
+  const user = await getAuthenticatedUser();
+
+  await db.update(users).set({ avatarUrl: url }).where(eq(users.id, user.id));
+
+  revalidatePath('/settings');
+  revalidatePath(`/${user.username}`);
+  return { success: true };
+}
+
+export async function updateBanner(url: string) {
+  const user = await getAuthenticatedUser();
+
+  await db.update(users).set({ bannerUrl: url }).where(eq(users.id, user.id));
+
+  revalidatePath('/settings');
+  revalidatePath(`/${user.username}`);
   return { success: true };
 }
 

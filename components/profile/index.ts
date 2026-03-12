@@ -4,6 +4,8 @@ export { FollowButton } from './follow-button';
 export { PinnedPosts } from './pinned-posts';
 export { ProfileHeader } from './profile-header';
 export { ProfilePosts } from './profile-posts';
+export { ProfileReactions } from './profile-reactions';
+export { ProfileReplies } from './profile-replies';
 export { ProfileTabs } from './profile-tabs';
 export { ProfileViewers } from './profile-viewers';
 export { StoryHighlights } from './story-highlights';

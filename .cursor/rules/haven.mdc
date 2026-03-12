@@ -23,7 +23,9 @@ Haven is a privacy-first, ad-free social platform built with Next.js 16 (App Rou
 - `lib/db/queries/` -- Reusable query functions. Never import these in components directly.
 - `lib/actions/` -- Next.js server actions. All mutations go through here. Named `{domain}.actions.ts`.
 - `lib/validators/` -- Zod schemas for input validation. Shared between client forms and server actions.
-- `lib/` (root files) -- Service clients (pusher, redis, resend, uploadthing, crypto, og-scraper), utilities, constants, env config.
+- `lib/ably/` -- Ably real-time: `server.ts` (REST publish), `client.ts` (Realtime singleton with token auth).
+- `lib/uploadthing/` -- UploadThing: `router.ts` (file upload routes), `client.ts` (`useUploadThing` hook), `server.ts` (`UTApi` + `extractFileKey`).
+- `lib/` (root files) -- Service clients (redis, resend, crypto, og-scraper), utilities, constants, env config.
 - `hooks/` -- Custom React hooks. Encapsulate side effects, subscriptions, and browser APIs.
 - `stores/` -- Zustand stores. Small, atomic, single-responsibility. Named `{concern}.store.ts`.
 - `types/` -- Shared TypeScript types and interfaces.
@@ -32,7 +34,7 @@ Haven is a privacy-first, ad-free social platform built with Next.js 16 (App Rou
 
 ```
 User Interaction → Component (callback) → Server Action (lib/actions/) → DB Query (lib/db/queries/) → Drizzle → Neon PostgreSQL
-                                        → Pusher (real-time events)
+                                        → Ably (real-time events)
                                         → Upstash Redis (cache/presence)
 ```
 
@@ -163,7 +165,7 @@ export const useZenModeStore = create<ZenModeState>()(
 
 - **Files**: kebab-case (`post-card.tsx`, `zen-mode.store.ts`, `post.actions.ts`).
 - **Components**: PascalCase (`PostCard`, `MessageBubble`).
-- **Hooks**: camelCase with `use` prefix (`useDebounce`, `usePusher`).
+- **Hooks**: camelCase with `use` prefix (`useDebounce`, `useRealtimeChannel`).
 - **Stores**: camelCase with `use` prefix and `Store` suffix (`useZenModeStore`).
 - **Server actions**: camelCase verbs (`createPost`, `editMessage`, `toggleFollow`).
 - **Validators**: camelCase with `Schema` suffix (`createPostSchema`, `editProfileSchema`).

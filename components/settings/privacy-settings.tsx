@@ -1,7 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { Eye, Lock } from 'lucide-react';
+import { Eye, Heart, Lock, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,8 @@ interface PrivacySettingsProps {
   initialData: {
     isPrivate: boolean;
     profileViewsEnabled: boolean;
+    showReplies: boolean;
+    showReactions: boolean;
   };
 }
 
@@ -47,7 +49,10 @@ function ToggleSwitch({
 export function PrivacySettings({ initialData }: PrivacySettingsProps) {
   const [isPending, startTransition] = useTransition();
 
-  function handleToggle(field: 'isPrivate' | 'profileViewsEnabled', value: boolean) {
+  function handleToggle(
+    field: 'isPrivate' | 'profileViewsEnabled' | 'showReplies' | 'showReactions',
+    value: boolean,
+  ) {
     const newData = { ...initialData, [field]: value };
     startTransition(async () => {
       try {
@@ -99,6 +104,40 @@ export function PrivacySettings({ initialData }: PrivacySettingsProps) {
           <ToggleSwitch
             checked={initialData.profileViewsEnabled}
             onChange={(v) => handleToggle('profileViewsEnabled', v)}
+            disabled={isPending}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <MessageSquare className="text-muted-foreground mt-0.5 size-5" />
+            <div>
+              <Label className="text-sm font-medium">Show replies on profile</Label>
+              <p className="text-muted-foreground text-xs">
+                Let others see your replies on your profile
+              </p>
+            </div>
+          </div>
+          <ToggleSwitch
+            checked={initialData.showReplies}
+            onChange={(v) => handleToggle('showReplies', v)}
+            disabled={isPending}
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Heart className="text-muted-foreground mt-0.5 size-5" />
+            <div>
+              <Label className="text-sm font-medium">Show reactions on profile</Label>
+              <p className="text-muted-foreground text-xs">
+                Let others see your reactions on your profile
+              </p>
+            </div>
+          </div>
+          <ToggleSwitch
+            checked={initialData.showReactions}
+            onChange={(v) => handleToggle('showReactions', v)}
             disabled={isPending}
           />
         </div>
